@@ -2,6 +2,7 @@
 
 module DNAnts.View.Window
   ( runWindow
+  , Window(..)
   ) where
 
 import Control.Exception (finally)
