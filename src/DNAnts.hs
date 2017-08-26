@@ -5,14 +5,16 @@ module DNAnts
   ) where
 
 import Control.Exception (finally)
-import Control.Monad (unless)
+import Control.Monad (unless, when)
 import DNAnts.View.Window (Window(Window, renderer), runWindow)
 import Data.DNAnts.AppSettings
-       (AppSettings(AppSettings, gridExtends, gridSpacing))
+       (AppSettings(AppSettings, framesPerSecond, gridExtends,
+                    gridSpacing))
 import Data.Text (pack)
 import GHC.Word (Word8)
 import qualified SDL
 import SDL (($=))
+import qualified SDL.Raw
 import SDL.Vect (V2(V2), V4(V4))
 
 defer = flip finally
@@ -26,12 +28,18 @@ render Window {renderer} = do
   SDL.rendererDrawBlendMode renderer $= SDL.BlendMod
   SDL.present renderer
 
-gameLoop window = do
+gameLoop settings window lastFrameTime = do
   events <- map SDL.eventPayload <$> SDL.pollEvents
   let quit = SDL.QuitEvent `elem` events
   unless quit $ do
+    frameTime <- SDL.Raw.getTicks
+    let deltaTime = frameTime - lastFrameTime
+        minFrameTime = fromIntegral (1000 `div` framesPerSecond settings)
     render window
-    gameLoop window
+    frameTimeAfter <- SDL.Raw.getTicks
+    when (frameTimeAfter - frameTime < minFrameTime) $
+      SDL.delay $ minFrameTime - (frameTimeAfter - frameTime)
+    gameLoop settings window frameTime
 
 runApp :: String -> AppSettings -> IO ()
 runApp title settings@AppSettings {gridExtends, gridSpacing} =
@@ -39,4 +47,4 @@ runApp title settings@AppSettings {gridExtends, gridSpacing} =
       windowWidth = fromIntegral (gridWidth * gridSpacing)
       windowHeight = fromIntegral (gridHeight * gridSpacing)
   in runWindow (pack title) windowWidth windowHeight $ \window ->
-       gameLoop window
+       gameLoop settings window =<< SDL.Raw.getTicks
