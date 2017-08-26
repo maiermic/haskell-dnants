@@ -1,6 +1,10 @@
 module DNAnts
-    ( someFunc
-    ) where
+  ( runApp
+  ) where
 
-someFunc :: IO ()
-someFunc = putStrLn "someFunc"
+import Data.DNAnts.AppSettings (AppSettings(AppSettings))
+
+runApp :: String -> AppSettings -> IO ()
+runApp title settings = do
+  print $ "running app: " ++ title
+  print $ show settings

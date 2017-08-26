@@ -1,6 +1,7 @@
 module Main where
 
 import Control.Monad (when)
+import DNAnts (runApp)
 import Data.DNAnts.AppSettings
        (AppSettings(AppSettings, framesPerSecond, gridExtends,
                     gridSpacing, initTeamSize, numTeams, roundsPerSecond, showGrid,
@@ -98,4 +99,4 @@ main :: IO ()
 main = do
   settings <- getArgs >>= processArgs
   validateSettings settings
-  print $ show settings
+  runApp "game'-._.of'._.survive" settings
