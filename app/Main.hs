@@ -1,5 +1,6 @@
 module Main where
 
+import Control.Monad (when)
 import Data.DNAnts.AppSettings
        (AppSettings(AppSettings, framesPerSecond, gridExtends,
                     gridSpacing, initTeamSize, numTeams, roundsPerSecond, showGrid,
@@ -79,7 +80,6 @@ options =
   ]
 
 -- TODO use_32px
--- TODO validate that length of teamCodes is at most 4
 processArgs :: [String] -> IO AppSettings
 processArgs args =
   case getOpt RequireOrder options args of
@@ -89,7 +89,13 @@ processArgs args =
   where
     header = "Usage: dnants [OPTION...]"
 
+validateSettings :: AppSettings -> IO ()
+validateSettings settings =
+  when (length (teamCodes settings) > 4) $
+  ioError $ userError "Only a maximum of 4 teams is allowed"
+
 main :: IO ()
 main = do
   settings <- getArgs >>= processArgs
+  validateSettings settings
   print $ show settings
