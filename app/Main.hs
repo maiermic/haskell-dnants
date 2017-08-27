@@ -2,7 +2,7 @@ module Main where
 
 import Control.Monad (when)
 import DNAnts (runApp)
-import Data.DNAnts.AppSettings
+import DNAnts.Types
        (AppSettings(AppSettings, framesPerSecond, gridExtends,
                     gridSpacing, initTeamSize, numTeams, roundsPerSecond, showGrid,
                     showTraces, teamCodes, traceRounds))

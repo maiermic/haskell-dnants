@@ -7,26 +7,16 @@ module DNAnts
 import Control.Exception (finally)
 import Control.Monad (unless, when)
 import DNAnts.View.Window (Window(Window, renderer), runWindow)
-import Data.DNAnts.AppSettings
-       (AppSettings(AppSettings, framesPerSecond, gridExtends,
-                    gridSpacing))
+import DNAnts.State.AppPlayState (defaultAppPlayState, draw)
+import DNAnts.Types (AppSettings(AppSettings, framesPerSecond, gridExtends,
+                                         gridSpacing), rgb)
 import Data.Text (pack)
 import GHC.Word (Word8)
 import qualified SDL
-import SDL (($=))
+
 import qualified SDL.Raw
-import SDL.Vect (V2(V2), V4(V4))
 
 defer = flip finally
-
-rgb :: Word8 -> Word8 -> Word8 -> V4 Word8
-rgb r g b = V4 r g b maxBound
-
-render Window {renderer} = do
-  SDL.rendererDrawColor renderer $= rgb 211 211 211
-  SDL.clear renderer
-  SDL.rendererDrawBlendMode renderer $= SDL.BlendMod
-  SDL.present renderer
 
 gameLoop settings window lastFrameTime = do
   events <- map SDL.eventPayload <$> SDL.pollEvents
@@ -35,7 +25,7 @@ gameLoop settings window lastFrameTime = do
     frameTime <- SDL.Raw.getTicks
     let deltaTime = frameTime - lastFrameTime
         minFrameTime = fromIntegral (1000 `div` framesPerSecond settings)
-    render window
+    draw settings window defaultAppPlayState
     frameTimeAfter <- SDL.Raw.getTicks
     when (frameTimeAfter - frameTime < minFrameTime) $
       SDL.delay $ minFrameTime - (frameTimeAfter - frameTime)
