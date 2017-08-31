@@ -56,7 +56,7 @@ runApp title settings@AppSettings {gridExtends, gridSpacing} =
        renderer <- getRenderer window
        initialFrameTime <- liftIO SDL.Raw.getTicks
        sprites <- loadSprites renderer
-       let state = defaultAppPlayState sprites
+       let state = defaultAppPlayState settings sprites
        liftIO $
          execStateT
            gameLoop
