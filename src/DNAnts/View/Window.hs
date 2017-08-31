@@ -1,11 +1,11 @@
 {-# LANGUAGE NamedFieldPuns #-}
 
-module DNAnts.View.Window
-  ( runWindow
-  , Window(..)
-  ) where
+module DNAnts.View.Window where
 
 import Control.Exception (finally)
+import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad.Writer.DNAnts.ResourceM
+       (ResourceM, onReleaseResources)
 import Data.Text (Text)
 import Foreign.C.Types (CInt)
 import qualified SDL
@@ -16,27 +16,29 @@ data Window = Window
   , renderer :: SDL.Renderer
   }
 
-defer = flip finally
+getWindow :: MonadIO m => Text -> CInt -> CInt -> ResourceM m SDL.Window
+getWindow title width height = do
+  window <-
+    liftIO $
+    SDL.createWindow
+      title
+      SDL.defaultWindow
+      { SDL.windowPosition = SDL.Centered
+      , SDL.windowInitialSize = V2 width height
+      }
+  onReleaseResources $ SDL.destroyWindow window
+  return window
 
-runWindow :: Text -> CInt -> CInt -> (Window -> IO a) -> IO a
-runWindow title width height app = do
-  SDL.initialize [SDL.InitVideo]
-  defer SDL.quit $ do
-    window <-
-      SDL.createWindow
-        title
-        SDL.defaultWindow
-        { SDL.windowPosition = SDL.Centered
-        , SDL.windowInitialSize = V2 width height
-        }
-    defer (SDL.destroyWindow window) $ do
-      SDL.raiseWindow window
-      renderer <-
-        SDL.createRenderer
-          window
-          (-1)
-          SDL.RendererConfig
-          { SDL.rendererType = SDL.AcceleratedVSyncRenderer
-          , SDL.rendererTargetTexture = True
-          }
-      defer (SDL.destroyRenderer renderer) $ app Window {window, renderer}
+getRenderer :: MonadIO m => SDL.Window -> ResourceM m SDL.Renderer
+getRenderer window = do
+  renderer <-
+    liftIO $
+    SDL.createRenderer
+      window
+      (-1)
+      SDL.RendererConfig
+      { SDL.rendererType = SDL.AcceleratedVSyncRenderer
+      , SDL.rendererTargetTexture = True
+      }
+  onReleaseResources $ SDL.destroyRenderer renderer
+  return renderer

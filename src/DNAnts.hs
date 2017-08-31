@@ -4,19 +4,21 @@ module DNAnts
   ( runApp
   ) where
 
-import Control.Exception (finally)
 import Control.Monad (unless, when)
-import DNAnts.View.Window (Window(Window, renderer), runWindow)
+import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad.Writer.DNAnts.ResourceM
+       (ResourceM, onReleaseResources, runResourceM)
 import DNAnts.State.AppPlayState (defaultAppPlayState, draw)
-import DNAnts.Types (AppSettings(AppSettings, framesPerSecond, gridExtends,
-                                         gridSpacing), rgb)
+import DNAnts.Types
+       (AppSettings(AppSettings, framesPerSecond, gridExtends,
+                    gridSpacing),
+        rgb)
+import DNAnts.View.Window
+       (Window(Window, renderer, window), getRenderer, getWindow)
 import Data.Text (pack)
 import GHC.Word (Word8)
 import qualified SDL
-
 import qualified SDL.Raw
-
-defer = flip finally
 
 gameLoop settings window lastFrameTime = do
   events <- map SDL.eventPayload <$> SDL.pollEvents
@@ -36,5 +38,9 @@ runApp title settings@AppSettings {gridExtends, gridSpacing} =
   let (gridWidth, gridHeight) = gridExtends
       windowWidth = fromIntegral (gridWidth * gridSpacing)
       windowHeight = fromIntegral (gridHeight * gridSpacing)
-  in runWindow (pack title) windowWidth windowHeight $ \window ->
-       gameLoop settings window =<< SDL.Raw.getTicks
+  in runResourceM $ do
+       liftIO $ SDL.initialize [SDL.InitVideo]
+       onReleaseResources SDL.quit
+       window <- getWindow (pack title) windowWidth windowHeight
+       renderer <- getRenderer window
+       liftIO $ gameLoop settings Window {renderer, window} =<< SDL.Raw.getTicks

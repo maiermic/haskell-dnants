@@ -8,8 +8,7 @@ import DNAnts.Types
        (AppSettings(AppSettings, framesPerSecond, gridExtends,
                     gridSpacing),
         Color, rgb, rgba)
-import DNAnts.View.Window
-       (Window(Window, renderer, window), runWindow)
+import DNAnts.View.Window (Window(Window, renderer, window))
 import GHC.Word (Word32)
 import qualified SDL
 import SDL (($=))
