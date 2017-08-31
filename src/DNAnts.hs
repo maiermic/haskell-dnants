@@ -4,12 +4,10 @@ module DNAnts
   ( runApp
   ) where
 
-import Control.Monad.Trans.State.Lazy (runStateT, execStateT, StateT, get, put)
-import Data.Char (isDigit, digitToInt)
-import System.Random (randomRIO)
-import Control.Monad (when)
 import Control.Monad (unless, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad.Trans.State.Lazy
+       (StateT, execStateT, get, put)
 import Control.Monad.Writer.DNAnts.ResourceM
        (ResourceM, onReleaseResources, runResourceM)
 import DNAnts.State.AppPlayState (defaultAppPlayState, draw)
@@ -20,7 +18,7 @@ import DNAnts.Types
 import DNAnts.View.Window
        (Window(Window, renderer, window), getRenderer, getWindow)
 import Data.Text (pack)
-import GHC.Word (Word8, Word32)
+import GHC.Word (Word32, Word8)
 import qualified SDL
 import qualified SDL.Raw
 
@@ -35,14 +33,14 @@ gameLoop = do
     frameTime <- liftIO SDL.Raw.getTicks
     let deltaTime = frameTime - lastFrameTime
         minFrameTime = fromIntegral (1000 `div` framesPerSecond settings)
-    frameTimeAfter <- liftIO $ do
-      draw settings window defaultAppPlayState
-      SDL.Raw.getTicks
+    frameTimeAfter <-
+      liftIO $ do
+        draw settings window defaultAppPlayState
+        SDL.Raw.getTicks
     when (frameTimeAfter - frameTime < minFrameTime) $
       liftIO $ SDL.delay $ minFrameTime - (frameTimeAfter - frameTime)
     put (settings, window, frameTime)
     gameLoop
-
 
 runApp :: String -> AppSettings -> IO ()
 runApp title settings@AppSettings {gridExtends, gridSpacing} =
@@ -55,5 +53,8 @@ runApp title settings@AppSettings {gridExtends, gridSpacing} =
        window <- getWindow (pack title) windowWidth windowHeight
        renderer <- getRenderer window
        initialFrameTime <- liftIO SDL.Raw.getTicks
-       liftIO $ execStateT gameLoop (settings, Window {renderer, window}, initialFrameTime)
+       liftIO $
+         execStateT
+           gameLoop
+           (settings, Window {renderer, window}, initialFrameTime)
        return ()
