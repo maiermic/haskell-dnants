@@ -7,8 +7,10 @@ module DNAnts.State.AppPlayState where
 import DNAnts.Types
        (AppSettings(AppSettings, framesPerSecond, gridExtends,
                     gridSpacing),
-        Color, rgb, rgba)
+        Color, Position, rect, rgb, rgba)
+import DNAnts.View.Sprites (Sprite, Sprites(Sprites, rock))
 import DNAnts.View.Window (Window(Window, renderer, window))
+import Foreign.C.Types (CInt)
 import GHC.Word (Word32)
 import qualified SDL
 import SDL (($=))
@@ -25,6 +27,7 @@ data AppPlayState = AppPlayState
   , gridSpacing :: Int
   , gridExtents :: (Int, Int)
   , markedCell :: (Int, Int)
+  , sprites :: Sprites
   , teamColors :: [Color]
   , mapRgbMode :: Color
   , highlightColor :: Color
@@ -32,9 +35,10 @@ data AppPlayState = AppPlayState
   , takenColor :: Color
   , foodColor :: Color
   , grassColor :: Color
-  } deriving (Show)
+  }
 
-defaultAppPlayState =
+defaultAppPlayState :: Sprites -> AppPlayState
+defaultAppPlayState sprites =
   AppPlayState
   { active = True
   , paused = False
@@ -46,6 +50,7 @@ defaultAppPlayState =
   , gridSpacing = 5
   , gridExtents = (0, 0)
   , markedCell = (-1, -1)
+  , sprites
   , teamColors =
       [ rgba 0xff 0x12 0x66 0x88
       , rgba 0x00 0xaa 0x23 0x88
@@ -61,8 +66,21 @@ defaultAppPlayState =
   }
 
 draw :: AppSettings -> Window -> AppPlayState -> IO ()
-draw settings Window {renderer} state = do
+draw settings window@Window {renderer} state = do
   SDL.rendererDrawColor renderer $= rgba 0xc3 0xc3 0xc3 0x00
   SDL.clear renderer
   SDL.rendererDrawBlendMode renderer $= SDL.BlendMod
+  renderMap settings window state
   SDL.present renderer
+
+renderMap :: AppSettings -> Window -> AppPlayState -> IO ()
+renderMap settings window AppPlayState {sprites = Sprites {rock}} = do
+  renderBarrierCell settings window rock (0, 0)
+
+renderBarrierCell :: AppSettings -> Window -> Sprite -> Position -> IO ()
+renderBarrierCell AppSettings {gridSpacing} Window {renderer} texture (cellX, cellY) = do
+  let size = (fromIntegral gridSpacing) :: CInt
+      dstRect =
+        rect (fromIntegral cellX * size) (fromIntegral cellY * size) size size
+  SDL.rendererDrawBlendMode renderer $= SDL.BlendMod
+  SDL.copy renderer texture Nothing (Just dstRect)

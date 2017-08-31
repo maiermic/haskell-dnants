@@ -65,5 +65,37 @@
     <orderEntry type="library" name="unordered-containers-0.2.8.0" level="project" />
     <orderEntry type="library" name="vector-0.12.0.1" level="project" />
     <orderEntry type="library" name="void-0.7.2" level="project" />
+    <orderEntry type="library" name="FontyFruity-0.5.3.3" level="project" />
+    <orderEntry type="library" name="JuicyPixels-3.2.8.2" level="project" />
+    <orderEntry type="library" name="Rasterific-0.7.2.1" level="project" />
+    <orderEntry type="library" name="ansi-terminal-0.6.3.1" level="project" />
+    <orderEntry type="library" name="ansi-wl-pprint-0.6.7.3" level="project" />
+    <orderEntry type="library" name="attoparsec-0.13.1.0" level="project" />
+    <orderEntry type="library" name="dlist-0.8.0.3" level="project" />
+    <orderEntry type="library" name="math-functions-0.2.1.0" level="project" />
+    <orderEntry type="library" name="mwc-random-0.13.6.0" level="project" />
+    <orderEntry type="library" name="optparse-applicative-0.13.2.0" level="project" />
+    <orderEntry type="library" name="rasterific-svg-0.3.3" level="project" />
+    <orderEntry type="library" name="svg-tree-0.6.2" level="project" />
+    <orderEntry type="library" name="vector-algorithms-0.7.0.1" level="project" />
+    <orderEntry type="library" name="vector-th-unbox-0.2.1.6" level="project" />
+    <orderEntry type="library" name="xml-1.3.14" level="project" />
+    <orderEntry type="library" name="zlib-0.6.1.2" level="project" />
+    <orderEntry type="library" name="FontyFruity-0.5.3.3" level="project" />
+    <orderEntry type="library" name="JuicyPixels-3.2.8.2" level="project" />
+    <orderEntry type="library" name="Rasterific-0.7.2.1" level="project" />
+    <orderEntry type="library" name="ansi-terminal-0.6.3.1" level="project" />
+    <orderEntry type="library" name="ansi-wl-pprint-0.6.7.3" level="project" />
+    <orderEntry type="library" name="attoparsec-0.13.1.0" level="project" />
+    <orderEntry type="library" name="dlist-0.8.0.3" level="project" />
+    <orderEntry type="library" name="math-functions-0.2.1.0" level="project" />
+    <orderEntry type="library" name="mwc-random-0.13.6.0" level="project" />
+    <orderEntry type="library" name="optparse-applicative-0.13.2.0" level="project" />
+    <orderEntry type="library" name="rasterific-svg-0.3.3" level="project" />
+    <orderEntry type="library" name="svg-tree-0.6.2" level="project" />
+    <orderEntry type="library" name="vector-algorithms-0.7.0.1" level="project" />
+    <orderEntry type="library" name="vector-th-unbox-0.2.1.6" level="project" />
+    <orderEntry type="library" name="xml-1.3.14" level="project" />
+    <orderEntry type="library" name="zlib-0.6.1.2" level="project" />
   </component>
 </module>

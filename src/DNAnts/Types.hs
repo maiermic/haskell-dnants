@@ -1,7 +1,9 @@
 module DNAnts.Types where
 
+import Foreign.C.Types (CInt)
 import GHC.Word (Word8)
-import SDL.Vect (V4(V4))
+import qualified SDL
+import SDL.Vect (Point(P), V2(V2), V4(V4))
 
 data Orientation
   = None
@@ -45,3 +47,6 @@ data AppSettings = AppSettings
   , showTraces :: Bool
   , teamCodes :: [String]
   } deriving (Show)
+
+rect :: CInt -> CInt -> CInt -> CInt -> SDL.Rectangle CInt
+rect x y w h = SDL.Rectangle (P $ V2 x y) (V2 w h)

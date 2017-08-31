@@ -27,12 +27,18 @@ library
                      , DNAnts.State.Grid
                      , DNAnts.State.Map
                      , DNAnts.State.Population
+                     , DNAnts.SVG
                      , DNAnts.Types
                      , DNAnts.View.Window
+                     , DNAnts.View.Sprites
   build-depends:       base >= 4.7 && < 5
+                     , JuicyPixels >= 3.2.8.2  && < 4.0
+                     , rasterific-svg >= 0.3.2    && < 0.4
                      , sdl2 >= 2.2.0
+                     , svg-tree >= 0.6.1    && < 0.7
                      , text
                      , transformers >= 0.5 && < 0.6
+                     , vector >= 0.12.0.1 && < 0.13
   default-language:    Haskell2010
 
 executable haskell-dnants-exe

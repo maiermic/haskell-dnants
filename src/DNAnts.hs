@@ -10,7 +10,8 @@ import Control.Monad.Trans.State.Lazy
        (StateT, execStateT, get, put)
 import Control.Monad.Writer.DNAnts.ResourceM
        (ResourceM, onReleaseResources, runResourceM)
-import DNAnts.State.AppPlayState (defaultAppPlayState, draw)
+import DNAnts.State.AppPlayState
+       (AppPlayState, defaultAppPlayState, draw)
 import DNAnts.Types
        (AppSettings(AppSettings, framesPerSecond, gridExtends,
                     gridSpacing),
@@ -21,12 +22,13 @@ import Data.Text (pack)
 import GHC.Word (Word32, Word8)
 import qualified SDL
 import qualified SDL.Raw
+import DNAnts.View.Sprites (loadSprites)
 
 type FrameTime = Word32
 
-gameLoop :: StateT (AppSettings, Window, FrameTime) IO ()
+gameLoop :: StateT (AppSettings, Window, AppPlayState, FrameTime) IO ()
 gameLoop = do
-  (settings, window, lastFrameTime) <- get
+  (settings, window, state, lastFrameTime) <- get
   events <- liftIO $ map SDL.eventPayload <$> SDL.pollEvents
   let quit = SDL.QuitEvent `elem` events
   unless quit $ do
@@ -35,11 +37,11 @@ gameLoop = do
         minFrameTime = fromIntegral (1000 `div` framesPerSecond settings)
     frameTimeAfter <-
       liftIO $ do
-        draw settings window defaultAppPlayState
+        draw settings window state
         SDL.Raw.getTicks
     when (frameTimeAfter - frameTime < minFrameTime) $
       liftIO $ SDL.delay $ minFrameTime - (frameTimeAfter - frameTime)
-    put (settings, window, frameTime)
+    put (settings, window, state, frameTime)
     gameLoop
 
 runApp :: String -> AppSettings -> IO ()
@@ -53,8 +55,10 @@ runApp title settings@AppSettings {gridExtends, gridSpacing} =
        window <- getWindow (pack title) windowWidth windowHeight
        renderer <- getRenderer window
        initialFrameTime <- liftIO SDL.Raw.getTicks
+       sprites <- loadSprites renderer
+       let state = defaultAppPlayState sprites
        liftIO $
          execStateT
            gameLoop
-           (settings, Window {renderer, window}, initialFrameTime)
+           (settings, Window {renderer, window}, state, initialFrameTime)
        return ()

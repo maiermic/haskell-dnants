@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="ant"
+   viewBox="0 0 32 32"
+   version="1.0"
+   inkscape:version="0.48.5 r10040"
+   width="32"
+   height="32"
+   sodipodi:docname="ant-1.svg"
+   inkscape:export-filename="C:\Users\fuchsto\Workspaces\dnants.git\res\ant-4_32.bmp.png"
+   inkscape:export-xdpi="92.530121"
+   inkscape:export-ydpi="92.530121">
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1166"
+     inkscape:window-height="907"
+     id="namedview18"
+     showgrid="false"
+     showguides="true"
+     inkscape:guide-bbox="true"
+     inkscape:zoom="14.75"
+     inkscape:cx="8.179497"
+     inkscape:cy="15.41481"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="ant"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0" />
+  <defs
+     id="defs3">
+    <linearGradient
+       id="WhiteTransparent">
+      <stop
+         style="stop-color:white"
+         offset="0"
+         id="stop6" />
+      <stop
+         style="stop-color:white;stop-opacity:0"
+         offset="1"
+         id="stop8" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient3153"
+       y2="472.51999"
+       xlink:href="#WhiteTransparent"
+       gradientUnits="userSpaceOnUse"
+       x2="680.06"
+       gradientTransform="matrix(0.63377,2.3652,-2.3652,0.63377,761.18,-1845.5)"
+       y1="471.38"
+       x1="682.03998" />
+    <linearGradient
+       id="linearGradient3156"
+       y2="474.35001"
+       xlink:href="#WhiteTransparent"
+       gradientUnits="userSpaceOnUse"
+       x2="676.89001"
+       gradientTransform="matrix(-2.3652,-0.63377,-0.63377,2.3652,1976,-632.1)"
+       y1="471.57001"
+       x1="681.71997" />
+  </defs>
+  <path
+     inkscape:connector-curvature="0"
+     d="m 8.993807,13.415782 c 0.253035,0.333523 1.462667,0.849028 3.614497,1.176896 0.0083,0.512529 0.03908,0.996795 0.09669,1.456565 -2.7601881,-0.885375 -4.3024598,0.532524 -3.015851,0.663274 0.370295,0.06407 3.219513,0.823439 3.240085,0.827207 0.21395,0.900695 0.321196,0.511141 0.689433,1.112233 -2.795222,-0.754853 -6.0486894,3.330761 -4.0691918,3.139245 0.415554,-0.437158 2.0826098,-2.215288 3.5507228,-1.69587 -0.333113,2.619937 1.06169,3.515088 2.834862,3.414287 l 0.01242,0 c 2.627419,-0.208807 3.213511,-0.98078 2.483929,-3.227831 1.141562,-0.29157 3.521193,1.100468 3.912062,1.511247 1.807925,1.118976 -1.463026,-3.117 -4.075307,-3.133591 0.368237,-0.601092 0.880206,-0.22473 1.096212,-1.127308 5.725878,-0.977376 3.080859,-1.55275 0.218063,-1.484829 0.0576,-0.456002 0.100799,-0.940267 0.109024,-1.452796 2.151828,-0.331637 1.939789,-0.09949 2.188709,-0.433017 2.063233,-0.803305 3.969517,-2.984322 -0.624115,-1.312918 -0.343553,0.122484 0.144938,-0.486966 -1.692141,0.521141 -0.281834,-0.985489 -0.991569,-1.654417 -1.859706,-2.008665 1.199347,-0.0019 2.071599,-0.216694 2.071599,-1.426415 0,-1.322778 -0.277722,-0.541922 -0.744707,-1.519874 C 19.618503,8.6887804 21.294479,5.8390739 18.516797,7.555524 17.88318,6.677438 17.06853,6.149835 16.169536,6.136646 c -0.002,-0.0019 -0.0042,-0.0075 -0.0062,-0.0056 -0.0083,0 -0.01844,-0.0019 -0.02675,-0.0019 -0.901051,0.0113 -1.732159,0.546447 -2.363718,1.426417 -0.501714,-0.8000677 -3.556104,-0.6138365 -0.501971,0.859238 -0.46904,0.976068 -0.746762,0.19898 -0.746762,1.521758 0,1.205952 0.872252,1.424531 2.069539,1.424531 -0.866079,0.356132 -1.575812,1.02506 -1.857648,2.00678 C 10.898949,12.359769 10.062495,12.402363 9.721,12.278 8.842294,11.771753 6.9587317,11.769478 8.993807,13.415782 z"
+     style="fill:#999999;fill-opacity:1;stroke:#585858;stroke-width:0.2;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+     id="ant-shape"
+     inkscape:export-filename="C:\Users\fuchsto\Workspaces\dnants.git\res\ant-4_64.png"
+     inkscape:export-xdpi="92.511139"
+     inkscape:export-ydpi="92.511139"
+     sodipodi:nodetypes="ccccccccccccccccccccscccccccscccc" />
+  <path
+     inkscape:connector-curvature="0"
+     d="m 15.20099,20.102567 c 0.333266,0 0.548835,0.544865 0.548835,1.01594 -0.431899,4.587921 -4.436719,-0.995024 -0.548835,-1.01594 z M 12.89023,9.8967343 c 0.732906,-1.1287484 1.174033,-2.6715286 2.633121,-3.3417234 0.660361,0.0019 0.382639,-0.658378 0.380582,1.683808 0.0041,1.066513 0.226292,2.2310111 -0.88048,2.2272411 -1.102659,0 -2.221684,0.435006 -2.133223,-0.5693257 z m 0.110997,5.0294647 c -0.07405,-0.987373 0.09257,-2.08592 0.794078,-2.728466 0.421724,-0.39005 0.833165,-0.759374 1.396836,-0.763142 0.958655,0.0037 0.682991,1.997359 0.680933,3.054451 -0.0042,1.085357 -0.11287,3.192387 -0.320659,4.00452 -0.209835,0.81025 -1.676617,0.194082 -2.063369,-0.668926 -0.39704,-0.891275 -0.491943,-1.662335 -0.487819,-2.898437 z"
+     style="fill:#e0e0e0;fill-opacity:1;stroke:#8c8c8c;stroke-width:0.2;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+     id="ant-specularity"
+     inkscape:export-filename="C:\Users\fuchsto\Workspaces\dnants.git\res\ant-4_64.png"
+     inkscape:export-xdpi="92.511139"
+     inkscape:export-ydpi="92.511139"
+     sodipodi:nodetypes="ccccccccccccccc" />
+  <path
+     inkscape:connector-curvature="0"
+     d="m 16.791087,20.153299 c -1.236375,0.936497 -0.653474,1.198772 -0.649361,2.60069 2.267432,0.340589 3.433477,-2.561945 0.649361,-2.60069 z M 19.302424,9.87816 c -0.125495,-1.4565651 -0.384697,-0.2253591 -0.94837,-1.4087001 -0.530756,-1.089126 -0.901051,-1.458447 -1.614899,-1.456563 -0.730305,0.910116 -1.156145,3.4946181 0.4999,3.9072811 1.104714,-0.0019 2.14977,-0.03956 2.063369,-1.042018 z m -0.0432,5.500271 c 0.07612,-0.981721 -0.09052,-2.087804 -0.789964,-2.728467 -0.425841,-0.386281 -0.83728,-0.759371 -1.392723,-0.759371 -1.479124,1.475407 -1.036555,5.082339 -0.775291,7.058969 0.211891,0.804597 1.68073,0.186542 2.061312,-0.674578 0.397039,-0.887505 0.902836,-1.658567 0.896666,-2.896553 z"
+     style="fill:#e0e0e0;fill-opacity:1;stroke:#8c8c8c;stroke-width:0.2;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+     id="ant-gloss"
+     inkscape:export-filename="C:\Users\fuchsto\Workspaces\dnants.git\res\ant-4_64.png"
+     inkscape:export-xdpi="92.511139"
+     inkscape:export-ydpi="92.511139"
+     sodipodi:nodetypes="cccccccccccccc" />
+  <metadata
+     id="metadata16">
+    <rdf:RDF>
+      <cc:Work>
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/publicdomain/" />
+        <dc:publisher>
+          <cc:Agent
+             rdf:about="http://openclipart.org/">
+            <dc:title>Openclipart</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:title />
+        <dc:date>2006-08-29T16:35:08</dc:date>
+        <dc:description>Balanced ant design with specularity</dc:description>
+        <dc:source>https://openclipart.org/detail/66/ant-by-andy</dc:source>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Andy</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:subject>
+          <rdf:Bag>
+            <rdf:li>animal</rdf:li>
+            <rdf:li>ant</rdf:li>
+            <rdf:li>black</rdf:li>
+            <rdf:li>black &amp; white</rdf:li>
+            <rdf:li>bug</rdf:li>
+            <rdf:li>creature</rdf:li>
+            <rdf:li>creepy</rdf:li>
+            <rdf:li>glossy</rdf:li>
+            <rdf:li>icon</rdf:li>
+            <rdf:li>insect</rdf:li>
+            <rdf:li>logo</rdf:li>
+            <rdf:li>shiny</rdf:li>
+            <rdf:li>spooky</rdf:li>
+          </rdf:Bag>
+        </dc:subject>
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/publicdomain/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+</svg>
