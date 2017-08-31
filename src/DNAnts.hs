@@ -4,6 +4,10 @@ module DNAnts
   ( runApp
   ) where
 
+import Control.Monad.Trans.State.Lazy (runStateT, execStateT, StateT, get, put)
+import Data.Char (isDigit, digitToInt)
+import System.Random (randomRIO)
+import Control.Monad (when)
 import Control.Monad (unless, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Writer.DNAnts.ResourceM
@@ -16,22 +20,29 @@ import DNAnts.Types
 import DNAnts.View.Window
        (Window(Window, renderer, window), getRenderer, getWindow)
 import Data.Text (pack)
-import GHC.Word (Word8)
+import GHC.Word (Word8, Word32)
 import qualified SDL
 import qualified SDL.Raw
 
-gameLoop settings window lastFrameTime = do
-  events <- map SDL.eventPayload <$> SDL.pollEvents
+type FrameTime = Word32
+
+gameLoop :: StateT (AppSettings, Window, FrameTime) IO ()
+gameLoop = do
+  (settings, window, lastFrameTime) <- get
+  events <- liftIO $ map SDL.eventPayload <$> SDL.pollEvents
   let quit = SDL.QuitEvent `elem` events
   unless quit $ do
-    frameTime <- SDL.Raw.getTicks
+    frameTime <- liftIO SDL.Raw.getTicks
     let deltaTime = frameTime - lastFrameTime
         minFrameTime = fromIntegral (1000 `div` framesPerSecond settings)
-    draw settings window defaultAppPlayState
-    frameTimeAfter <- SDL.Raw.getTicks
+    frameTimeAfter <- liftIO $ do
+      draw settings window defaultAppPlayState
+      SDL.Raw.getTicks
     when (frameTimeAfter - frameTime < minFrameTime) $
-      SDL.delay $ minFrameTime - (frameTimeAfter - frameTime)
-    gameLoop settings window frameTime
+      liftIO $ SDL.delay $ minFrameTime - (frameTimeAfter - frameTime)
+    put (settings, window, frameTime)
+    gameLoop
+
 
 runApp :: String -> AppSettings -> IO ()
 runApp title settings@AppSettings {gridExtends, gridSpacing} =
@@ -43,4 +54,6 @@ runApp title settings@AppSettings {gridExtends, gridSpacing} =
        onReleaseResources SDL.quit
        window <- getWindow (pack title) windowWidth windowHeight
        renderer <- getRenderer window
-       liftIO $ gameLoop settings Window {renderer, window} =<< SDL.Raw.getTicks
+       initialFrameTime <- liftIO SDL.Raw.getTicks
+       liftIO $ execStateT gameLoop (settings, Window {renderer, window}, initialFrameTime)
+       return ()
