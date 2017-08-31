@@ -34,6 +34,7 @@ library
   build-depends:       base >= 4.7 && < 5
                      , JuicyPixels >= 3.2.8.2  && < 4.0
                      , rasterific-svg >= 0.3.2    && < 0.4
+                     , safe-exceptions >= 0.1.6.0 && < 0.2.0.0
                      , sdl2 >= 2.2.0
                      , svg-tree >= 0.6.1    && < 0.7
                      , text

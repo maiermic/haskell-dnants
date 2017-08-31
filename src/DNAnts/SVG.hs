@@ -5,6 +5,9 @@ module DNAnts.SVG where
 
 import Codec.Picture.Types
        (Image(imageData, imageWidth), PixelRGBA8)
+import Control.Exception.Safe
+       (Exception, MonadThrow, SomeException, throwM)
+import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Vector.Generic (thaw)
 import Data.Vector.Storable.Mutable (IOVector)
 import Graphics.Rasterific.Svg
@@ -35,12 +38,22 @@ createSurfaceFromSVG image surfaceSize = do
 convertToMutableVector :: Vector Word8 -> IO (IOVector Word8)
 convertToMutableVector = thaw
 
-loadSVGImage :: FilePath -> IO (Maybe SVG)
+data LoadSVGImageException =
+  LoadSVGImageException String
+  deriving (Show)
+
+instance Exception LoadSVGImageException
+
+loadSVGImage :: (MonadIO m, MonadThrow m) => FilePath -> m SVG
 loadSVGImage filepath = do
-  mdoc <- loadSvgFile filepath
+  mdoc <- liftIO $ loadSvgFile filepath
   case mdoc of
-    Nothing -> return Nothing
-    Just doc -> do
-      cache <- loadCreateFontCache "fonty-texture-cache"
-      (finalImage, _) <- renderSvgDocument cache Nothing 96 doc
-      return $ Just finalImage
+    Nothing ->
+      throwM $
+      LoadSVGImageException $
+      "Ressource " ++ show filepath ++ " failed to load from drive"
+    Just doc ->
+      liftIO $ do
+        cache <- loadCreateFontCache "fonty-texture-cache"
+        (finalImage, _) <- renderSvgDocument cache Nothing 96 doc
+        return finalImage

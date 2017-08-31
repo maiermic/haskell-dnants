@@ -98,16 +98,13 @@ loadSprites renderer = do
 
 loadSprite :: MonadIO m => SDL.Renderer -> FilePath -> ResourceM m Sprite
 loadSprite renderer filePath = do
-  svg <- liftIO $ loadSVGImage filePath
-  -- TODO Nothing case
-  case svg of
-    Just image@Image {imageWidth, imageHeight} -> do
-      surface <-
-        liftIO $
-        createSurfaceFromSVG
-          image
-          (V2 (fromIntegral imageWidth) (fromIntegral imageHeight))
-      texture <- liftIO $ SDL.createTextureFromSurface renderer surface
-      liftIO $ SDL.freeSurface surface
-      onReleaseResources $ SDL.destroyTexture texture
-      return texture
+  image@Image {imageWidth, imageHeight} <- liftIO $ loadSVGImage filePath
+  surface <-
+    liftIO $
+    createSurfaceFromSVG
+      image
+      (V2 (fromIntegral imageWidth) (fromIntegral imageHeight))
+  texture <- liftIO $ SDL.createTextureFromSurface renderer surface
+  liftIO $ SDL.freeSurface surface
+  onReleaseResources $ SDL.destroyTexture texture
+  return texture
