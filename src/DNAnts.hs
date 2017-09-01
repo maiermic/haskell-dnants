@@ -13,7 +13,7 @@ import Control.Monad.Writer.DNAnts.ResourceM
 import DNAnts.State.AppPlayState
        (AppPlayState, defaultAppPlayState, draw)
 import DNAnts.Types
-       (AppSettings(AppSettings, framesPerSecond, gridExtends,
+       (AppSettings(AppSettings, framesPerSecond, gridExtents,
                     gridSpacing),
         rgb)
 import DNAnts.View.Window
@@ -45,8 +45,8 @@ gameLoop = do
     gameLoop
 
 runApp :: String -> AppSettings -> IO ()
-runApp title settings@AppSettings {gridExtends, gridSpacing} =
-  let (gridWidth, gridHeight) = gridExtends
+runApp title settings@AppSettings {gridExtents, gridSpacing} =
+  let (gridWidth, gridHeight) = gridExtents
       windowWidth = fromIntegral (gridWidth * gridSpacing)
       windowHeight = fromIntegral (gridHeight * gridSpacing)
   in runResourceM $ do

@@ -36,7 +36,7 @@ rgba :: Word8 -> Word8 -> Word8 -> Word8 -> Color
 rgba = V4
 
 data AppSettings = AppSettings
-  { gridExtends :: Extents
+  { gridExtents :: Extents
   , gridSpacing :: Int
   , framesPerSecond :: Int
   , roundsPerSecond :: Int

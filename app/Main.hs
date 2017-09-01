@@ -3,7 +3,7 @@ module Main where
 import Control.Monad (when)
 import DNAnts (runApp)
 import DNAnts.Types
-       (AppSettings(AppSettings, framesPerSecond, gridExtends,
+       (AppSettings(AppSettings, framesPerSecond, gridExtents,
                     gridSpacing, initTeamSize, numTeams, roundsPerSecond, showGrid,
                     showTraces, teamCodes, traceRounds))
 import System.Console.GetOpt
@@ -14,7 +14,7 @@ import System.Environment (getArgs, getProgName)
 defaultAppSettings :: AppSettings
 defaultAppSettings =
   AppSettings
-  { gridExtends = (23, 23)
+  { gridExtents = (23, 23)
   , gridSpacing = 32
   , framesPerSecond = 30
   , roundsPerSecond = 4
@@ -32,23 +32,23 @@ options =
       "g"
       ["grid"]
       (ReqArg
-         (\arg settings -> return settings {gridExtends = (read arg, read arg)})
+         (\arg settings -> return settings {gridExtents = (read arg, read arg)})
          "size")
       "Size of the grid (equal width and height)"
   , Option
       "w"
       ["grid-w"]
       (ReqArg
-         (\arg settings@AppSettings {gridExtends = (_, height)} ->
-            return settings {gridExtends = (read arg, height)})
+         (\arg settings@AppSettings {gridExtents = (_, height)} ->
+            return settings {gridExtents = (read arg, height)})
          "width")
       "Width of the grid"
   , Option
       "h"
       ["grid-h"]
       (ReqArg
-         (\arg settings@AppSettings {gridExtends = (width, _)} ->
-            return settings {gridExtends = (width, read arg)})
+         (\arg settings@AppSettings {gridExtents = (width, _)} ->
+            return settings {gridExtents = (width, read arg)})
          "height")
       "Height of the grid"
   , Option

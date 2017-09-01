@@ -12,7 +12,7 @@ import DNAnts.State.GameState
 import DNAnts.State.Grid
        (Grid(Grid, cells, extents), gridHeight, gridWidth)
 import DNAnts.Types
-       (AppSettings(AppSettings, framesPerSecond, gridExtends,
+       (AppSettings(AppSettings, framesPerSecond, gridExtents,
                     gridSpacing),
         Color, Position, rect, rgb, rgba)
 import DNAnts.View.Sprites (Sprite, Sprites(Sprites, rock))
