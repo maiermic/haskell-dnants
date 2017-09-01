@@ -5,6 +5,10 @@
 module DNAnts.State.AppPlayState where
 
 import DNAnts.State.Cell (Cell(Cell), defaultCell)
+import DNAnts.State.CellState
+       (CellState(CellState, cellType),
+        CellType(Barrier, Food, Grass, None, Plain, SpawnPoint, Water),
+        defaultCellState)
 import DNAnts.State.GameState
        (GameState(GameState, appSettings, gridBack, gridExtents,
                   gridFront, nteams, populBack, populFront, roundCount),
@@ -15,7 +19,7 @@ import DNAnts.Types
        (AppSettings(AppSettings, framesPerSecond, gridExtents,
                     gridSpacing, numTeams),
         Color, Position, rect, rgb, rgba)
-import DNAnts.View.Sprites (Sprite, Sprites(Sprites, rock))
+import DNAnts.View.Sprites (Sprite, Sprites(Sprites, rock, sugah1))
 import DNAnts.View.Window (Window(Window, renderer, window))
 import Data.Foldable (forM_)
 import Foreign.C.Types (CInt)
@@ -49,6 +53,12 @@ data AppPlayState = AppPlayState
 defaultAppPlayState :: AppSettings -> Sprites -> AppPlayState
 defaultAppPlayState appSettings@AppSettings {gridExtents, gridSpacing, numTeams} sprites =
   let (gridWidth, gridHeight) = gridExtents
+      barrierCell = Cell defaultCellState {cellType = Barrier}
+      foodCell = Cell defaultCellState {cellType = Food}
+      cellRow :: [Cell]
+      cellRow = concat $ replicate (gridWidth `div` 2) [barrierCell, foodCell]
+      cells :: [[Cell]]
+      cells = replicate gridHeight $ cellRow
   in AppPlayState
      { active = True
      , paused = False
@@ -66,11 +76,7 @@ defaultAppPlayState appSettings@AppSettings {gridExtents, gridSpacing, numTeams}
          , nteams = numTeams
          , gridExtents
          , roundCount = 0
-         , gridFront =
-             Grid
-             { extents = gridExtents
-             , cells = replicate gridHeight $ replicate gridWidth defaultCell
-             }
+         , gridFront = Grid {extents = gridExtents, cells}
          , gridBack = undefined -- TODO
          , populFront = undefined -- TODO
          , populBack = undefined -- TODO
@@ -99,11 +105,14 @@ draw settings window@Window {renderer} state = do
   SDL.present renderer
 
 renderMap :: AppSettings -> Window -> AppPlayState -> IO ()
-renderMap settings window AppPlayState {gameState, sprites = Sprites {rock}} = do
+renderMap settings window AppPlayState {gameState, sprites} = do
   let gridCells :: [(Cell, (Int, Int))]
       gridCells = concat $ addIndex2 $ cells $ gridState gameState
-  forM_ gridCells $ \(gridCell, (x, y)) ->
-    renderBarrierCell settings window rock (x, y)
+  forM_ gridCells $ \(Cell CellState {cellType}, (x, y)) ->
+    case cellType of
+      Barrier -> renderCell settings window (rock sprites) (x, y)
+      Food -> renderCell settings window (sugah1 sprites) (x, y)
+      _ -> mempty
 
 addIndex :: [a] -> [(a, Int)]
 addIndex a = zip a [0 ..]
@@ -113,8 +122,8 @@ addIndex2 a =
   map (\(row, y) -> map (\(value, x) -> (value, (x, y))) $ addIndex row) $
   addIndex a
 
-renderBarrierCell :: AppSettings -> Window -> Sprite -> Position -> IO ()
-renderBarrierCell AppSettings {gridSpacing} Window {renderer} texture (cellX, cellY) = do
+renderCell :: AppSettings -> Window -> Sprite -> Position -> IO ()
+renderCell AppSettings {gridSpacing} Window {renderer} texture (cellX, cellY) = do
   let size = (fromIntegral gridSpacing) :: CInt
       dstRect =
         rect (fromIntegral cellX * size) (fromIntegral cellY * size) size size
