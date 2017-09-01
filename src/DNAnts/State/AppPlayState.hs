@@ -14,7 +14,7 @@ import DNAnts.State.GameState
                   gridFront, nteams, populBack, populFront, roundCount),
         gridState)
 import DNAnts.State.Grid
-       (Grid(Grid, cells, extents), gridHeight, gridWidth, indexedCells)
+       (Grid(Grid, _cells, _extents), gridHeight, gridWidth, indexedCells)
 import DNAnts.Types
        (AppSettings(AppSettings, framesPerSecond, gridExtents,
                     gridSpacing, numTeams),
@@ -57,8 +57,8 @@ defaultAppPlayState appSettings@AppSettings {gridExtents, gridSpacing, numTeams}
       foodCell = Cell defaultCellState {cellType = Food}
       cellRow :: [Cell]
       cellRow = concat $ replicate (gridWidth `div` 2) [barrierCell, foodCell]
-      cells :: [[Cell]]
-      cells = replicate gridHeight $ cellRow
+      _cells :: [[Cell]]
+      _cells = replicate gridHeight $ cellRow
   in AppPlayState
      { active = True
      , paused = False
@@ -76,7 +76,7 @@ defaultAppPlayState appSettings@AppSettings {gridExtents, gridSpacing, numTeams}
          , nteams = numTeams
          , gridExtents
          , roundCount = 0
-         , gridFront = Grid {extents = gridExtents, cells}
+         , gridFront = Grid {_extents = gridExtents, _cells}
          , gridBack = undefined -- TODO
          , populFront = undefined -- TODO
          , populBack = undefined -- TODO

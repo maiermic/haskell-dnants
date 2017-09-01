@@ -3,7 +3,9 @@ module DNAnts.State.Map
   , defaultMapConfig
   ) where
 
-import DNAnts.State.Grid (Grid)
+module DNAnts.State.Map where
+
+import DNAnts.State.Grid (Grid(_extents), defaultGrid)
 import DNAnts.State.Population (Population)
 import DNAnts.Types (Extents, defaultExtents)
 
