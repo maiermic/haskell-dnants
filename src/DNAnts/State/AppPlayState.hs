@@ -14,7 +14,7 @@ import DNAnts.State.GameState
                   gridFront, nteams, populBack, populFront, roundCount),
         gridState)
 import DNAnts.State.Grid
-       (Grid(Grid, cells, extents), gridHeight, gridWidth)
+       (Grid(Grid, cells, extents), gridHeight, gridWidth, indexedCells)
 import DNAnts.Types
        (AppSettings(AppSettings, framesPerSecond, gridExtents,
                     gridSpacing, numTeams),
@@ -105,22 +105,12 @@ draw settings window@Window {renderer} state = do
   SDL.present renderer
 
 renderMap :: AppSettings -> Window -> AppPlayState -> IO ()
-renderMap settings window AppPlayState {gameState, sprites} = do
-  let gridCells :: [(Cell, (Int, Int))]
-      gridCells = concat $ addIndex2 $ cells $ gridState gameState
-  forM_ gridCells $ \(Cell CellState {cellType}, (x, y)) ->
+renderMap settings window AppPlayState {gameState, sprites} =
+  forM_ (indexedCells $ gridState gameState) $ \(Cell CellState {cellType}, (x, y)) ->
     case cellType of
       Barrier -> renderCell settings window (rock sprites) (x, y)
       Food -> renderCell settings window (sugah1 sprites) (x, y)
       _ -> mempty
-
-addIndex :: [a] -> [(a, Int)]
-addIndex a = zip a [0 ..]
-
-addIndex2 :: [[a]] -> [[(a, (Int, Int))]]
-addIndex2 a =
-  map (\(row, y) -> map (\(value, x) -> (value, (x, y))) $ addIndex row) $
-  addIndex a
 
 renderCell :: AppSettings -> Window -> Sprite -> Position -> IO ()
 renderCell AppSettings {gridSpacing} Window {renderer} texture (cellX, cellY) = do
