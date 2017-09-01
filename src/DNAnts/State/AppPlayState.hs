@@ -47,7 +47,7 @@ data AppPlayState = AppPlayState
   }
 
 defaultAppPlayState :: AppSettings -> Sprites -> AppPlayState
-defaultAppPlayState appSettings@AppSettings {gridExtents} sprites =
+defaultAppPlayState appSettings@AppSettings {gridExtents, gridSpacing} sprites =
   let (gridWidth, gridHeight) = gridExtents
   in AppPlayState
      { active = True
@@ -57,7 +57,7 @@ defaultAppPlayState appSettings@AppSettings {gridExtents} sprites =
      , showInTraces = True
      , showOutTraces = True
      , lastRoundMs = 0
-     , gridSpacing = 5
+     , gridSpacing
      , gridExtents
      , markedCell = (-1, -1)
      , gameState =
