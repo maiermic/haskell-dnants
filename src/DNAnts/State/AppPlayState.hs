@@ -13,7 +13,7 @@ import DNAnts.State.Grid
        (Grid(Grid, cells, extents), gridHeight, gridWidth)
 import DNAnts.Types
        (AppSettings(AppSettings, framesPerSecond, gridExtents,
-                    gridSpacing),
+                    gridSpacing, numTeams),
         Color, Position, rect, rgb, rgba)
 import DNAnts.View.Sprites (Sprite, Sprites(Sprites, rock))
 import DNAnts.View.Window (Window(Window, renderer, window))
@@ -47,7 +47,7 @@ data AppPlayState = AppPlayState
   }
 
 defaultAppPlayState :: AppSettings -> Sprites -> AppPlayState
-defaultAppPlayState appSettings@AppSettings {gridExtents, gridSpacing} sprites =
+defaultAppPlayState appSettings@AppSettings {gridExtents, gridSpacing, numTeams} sprites =
   let (gridWidth, gridHeight) = gridExtents
   in AppPlayState
      { active = True
@@ -63,7 +63,7 @@ defaultAppPlayState appSettings@AppSettings {gridExtents, gridSpacing} sprites =
      , gameState =
          GameState
          { appSettings
-         , nteams = 0
+         , nteams = numTeams
          , gridExtents
          , roundCount = 0
          , gridFront =
