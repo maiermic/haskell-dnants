@@ -47,8 +47,8 @@ data AppPlayState = AppPlayState
   }
 
 defaultAppPlayState :: AppSettings -> Sprites -> AppPlayState
-defaultAppPlayState appSettings sprites =
-  let gridExtents@(gridWidth, gridHeight) = (23, 23)
+defaultAppPlayState appSettings@AppSettings {gridExtents} sprites =
+  let (gridWidth, gridHeight) = gridExtents
   in AppPlayState
      { active = True
      , paused = False
