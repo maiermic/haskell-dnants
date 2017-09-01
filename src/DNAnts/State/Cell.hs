@@ -1,7 +1,7 @@
 module DNAnts.State.Cell where
 
-data Cell = Cell
-  {
-  }
+import DNAnts.State.CellState (CellState(CellState), defaultCellState)
 
-defaultCell = Cell {}
+data Cell = Cell CellState
+
+defaultCell = Cell defaultCellState

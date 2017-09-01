@@ -4,7 +4,7 @@
 
 module DNAnts.State.AppPlayState where
 
-import DNAnts.State.Cell (Cell(Cell))
+import DNAnts.State.Cell (Cell(Cell), defaultCell)
 import DNAnts.State.GameState
        (GameState(GameState, appSettings, gridBack, gridExtents,
                   gridFront, nteams, populBack, populFront, roundCount),
@@ -69,7 +69,7 @@ defaultAppPlayState appSettings@AppSettings {gridExtents, gridSpacing, numTeams}
          , gridFront =
              Grid
              { extents = gridExtents
-             , cells = replicate gridHeight $ replicate gridWidth Cell
+             , cells = replicate gridHeight $ replicate gridWidth defaultCell
              }
          , gridBack = undefined -- TODO
          , populFront = undefined -- TODO
