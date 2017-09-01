@@ -4,15 +4,20 @@
 
 module DNAnts.State.AppPlayState where
 
+import DNAnts.State.Cell (Cell(Cell))
 import DNAnts.State.GameState
        (GameState(GameState, appSettings, gridBack, gridExtents,
-                  gridFront, nteams, populBack, populFront, roundCount))
+                  gridFront, nteams, populBack, populFront, roundCount),
+        gridState)
+import DNAnts.State.Grid
+       (Grid(Grid, cells, extents), gridHeight, gridWidth)
 import DNAnts.Types
        (AppSettings(AppSettings, framesPerSecond, gridExtends,
                     gridSpacing),
         Color, Position, rect, rgb, rgba)
 import DNAnts.View.Sprites (Sprite, Sprites(Sprites, rock))
 import DNAnts.View.Window (Window(Window, renderer, window))
+import Data.Foldable (forM_)
 import Foreign.C.Types (CInt)
 import GHC.Word (Word32)
 import qualified SDL
@@ -43,7 +48,7 @@ data AppPlayState = AppPlayState
 
 defaultAppPlayState :: AppSettings -> Sprites -> AppPlayState
 defaultAppPlayState appSettings sprites =
-  let gridExtents = (0, 0)
+  let gridExtents@(gridWidth, gridHeight) = (23, 23)
   in AppPlayState
      { active = True
      , paused = False
@@ -61,7 +66,11 @@ defaultAppPlayState appSettings sprites =
          , nteams = 0
          , gridExtents
          , roundCount = 0
-         , gridFront = undefined -- TODO
+         , gridFront =
+             Grid
+             { extents = gridExtents
+             , cells = replicate gridHeight $ replicate gridWidth Cell
+             }
          , gridBack = undefined -- TODO
          , populFront = undefined -- TODO
          , populBack = undefined -- TODO
@@ -90,8 +99,17 @@ draw settings window@Window {renderer} state = do
   SDL.present renderer
 
 renderMap :: AppSettings -> Window -> AppPlayState -> IO ()
-renderMap settings window AppPlayState {sprites = Sprites {rock}} = do
-  renderBarrierCell settings window rock (0, 0)
+renderMap settings window AppPlayState {gameState, sprites = Sprites {rock}} = do
+  let grid :: Grid
+      grid = gridState gameState
+      indices :: [[(Int, Int)]]
+      indices =
+        [ [(x, y) | x <- [0 .. gridWidth grid - 1]]
+        | y <- [0 .. gridHeight grid - 1]
+        ]
+      gridCells = zip (concat $ cells grid) (concat indices)
+  forM_ gridCells $ \(gridCell, (x, y)) ->
+    renderBarrierCell settings window rock (x, y)
 
 renderBarrierCell :: AppSettings -> Window -> Sprite -> Position -> IO ()
 renderBarrierCell AppSettings {gridSpacing} Window {renderer} texture (cellX, cellY) = do

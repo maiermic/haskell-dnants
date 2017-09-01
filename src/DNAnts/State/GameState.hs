@@ -14,3 +14,6 @@ data GameState = GameState
   , populFront :: Population
   , populBack :: Population
   }
+
+gridState :: GameState -> Grid
+gridState = gridFront
