@@ -100,16 +100,18 @@ draw settings window@Window {renderer} state = do
 
 renderMap :: AppSettings -> Window -> AppPlayState -> IO ()
 renderMap settings window AppPlayState {gameState, sprites = Sprites {rock}} = do
-  let grid :: Grid
-      grid = gridState gameState
-      indices :: [[(Int, Int)]]
-      indices =
-        [ [(x, y) | x <- [0 .. gridWidth grid - 1]]
-        | y <- [0 .. gridHeight grid - 1]
-        ]
-      gridCells = zip (concat $ cells grid) (concat indices)
+  let gridCells :: [(Cell, (Int, Int))]
+      gridCells = concat $ addIndex2 $ cells $ gridState gameState
   forM_ gridCells $ \(gridCell, (x, y)) ->
     renderBarrierCell settings window rock (x, y)
+
+addIndex :: [a] -> [(a, Int)]
+addIndex a = zip a [0 ..]
+
+addIndex2 :: [[a]] -> [[(a, (Int, Int))]]
+addIndex2 a =
+  map (\(row, y) -> map (\(value, x) -> (value, (x, y))) $ addIndex row) $
+  addIndex a
 
 renderBarrierCell :: AppSettings -> Window -> Sprite -> Position -> IO ()
 renderBarrierCell AppSettings {gridSpacing} Window {renderer} texture (cellX, cellY) = do
