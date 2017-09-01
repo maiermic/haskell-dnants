@@ -33,6 +33,7 @@ library
                      , DNAnts.View.Sprites
   build-depends:       base >= 4.7 && < 5
                      , JuicyPixels >= 3.2.8.2  && < 4.0
+                     , lens >= 4.15.4 && < 5
                      , rasterific-svg >= 0.3.2    && < 0.4
                      , safe-exceptions >= 0.1.6.0 && < 0.2.0.0
                      , sdl2 >= 2.2.0
