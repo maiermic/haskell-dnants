@@ -1,2 +1,9 @@
+{-# LANGUAGE CPP #-}
+
+module Main where
+
+import System.FilePath.Glob (glob)
+import Test.DocTest (doctest)
+
 main :: IO ()
-main = putStrLn "Test suite not yet implemented"
+main = glob "src/**/*.hs" >>= doctest
