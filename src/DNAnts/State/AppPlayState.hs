@@ -15,9 +15,14 @@ import DNAnts.State.GameState
         gridState)
 import DNAnts.State.Grid
        (Grid(Grid, _cells, _extents), gridHeight, gridWidth, indexedCells)
+import DNAnts.State.Map
+       (Map(Map, grid, population),
+        MapConfig(extents, numBarriers, numFoodRegions, numGrassRegions,
+                  numTeams, symmetric, teamSize),
+        defaultMapConfig, generateMap)
 import DNAnts.Types
        (AppSettings(AppSettings, framesPerSecond, gridExtents,
-                    gridSpacing, numTeams),
+                    gridSpacing, initTeamSize, numTeams),
         Color, Position, rect, rgb, rgba)
 import DNAnts.View.Sprites (Sprite, Sprites(Sprites, rock, sugah1))
 import DNAnts.View.Window (Window(Window, renderer, window))
@@ -50,51 +55,63 @@ data AppPlayState = AppPlayState
   , grassColor :: Color
   }
 
-defaultAppPlayState :: AppSettings -> Sprites -> AppPlayState
-defaultAppPlayState appSettings@AppSettings {gridExtents, gridSpacing, numTeams} sprites =
-  let (gridWidth, gridHeight) = gridExtents
-      barrierCell = Cell defaultCellState {cellType = Barrier}
-      foodCell = Cell defaultCellState {cellType = Food}
-      cellRow :: [Cell]
-      cellRow = concat $ replicate (gridWidth `div` 2) [barrierCell, foodCell]
-      _cells :: [[Cell]]
-      _cells = replicate gridHeight $ cellRow
-  in AppPlayState
-     { active = True
-     , paused = False
-     , step = False
-     , showCommands = True
-     , showInTraces = True
-     , showOutTraces = True
-     , lastRoundMs = 0
-     , gridSpacing
-     , gridExtents
-     , markedCell = (-1, -1)
-     , gameState =
-         GameState
-         { appSettings
-         , nteams = numTeams
-         , gridExtents
-         , roundCount = 0
-         , gridFront = Grid {_extents = gridExtents, _cells}
-         , gridBack = undefined -- TODO
-         , populFront = undefined -- TODO
-         , populBack = undefined -- TODO
-         }
-     , sprites
-     , teamColors =
-         [ rgba 0xff 0x12 0x66 0x88
-         , rgba 0x00 0xaa 0x23 0x88
-         , rgba 0x87 0x57 0xe8 0x88
-         , rgba 0x84 0xa8 0x36 0x88
-         ]
-     , mapRgbMode = rgba 0x00 0x00 0x00 0x00
-     , highlightColor = rgba 0xaf 0x12 0x12 0xff
-     , blockedColor = rgba 0xff 0xb9 0x47 0xff
-     , takenColor = rgba 0x23 0x45 0x45 0xff
-     , foodColor = rgba 0xfa 0xb7 0x05 0xff
-     , grassColor = rgba 0xaa 0xde 0x87 0xff
-     }
+createMapConfig :: AppSettings -> MapConfig
+createMapConfig AppSettings {numTeams, gridExtents, initTeamSize} =
+  defaultMapConfig
+  { extents = gridExtents
+  , numGrassRegions = 8
+  , numFoodRegions = numTeams * 2
+  , numBarriers = 3
+  , numTeams
+  , teamSize = initTeamSize
+  , symmetric = numTeams > 1
+  }
+
+createGameState :: AppSettings -> IO GameState
+createGameState appSettings@AppSettings {gridExtents, gridSpacing, numTeams} = do
+  Map {grid, population} <- generateMap $ createMapConfig appSettings
+  return
+    GameState
+    { appSettings
+    , nteams = numTeams
+    , gridExtents
+    , roundCount = 0
+    , gridFront = grid
+    , gridBack = undefined -- TODO
+    , populFront = population
+    , populBack = undefined -- TODO
+    }
+
+defaultAppPlayState :: AppSettings -> Sprites -> IO AppPlayState
+defaultAppPlayState appSettings@AppSettings {gridExtents, gridSpacing, numTeams} sprites = do
+  gameState <- createGameState appSettings
+  return
+    AppPlayState
+    { active = True
+    , paused = False
+    , step = False
+    , showCommands = True
+    , showInTraces = True
+    , showOutTraces = True
+    , lastRoundMs = 0
+    , gridSpacing
+    , gridExtents
+    , markedCell = (-1, -1)
+    , gameState
+    , sprites
+    , teamColors =
+        [ rgba 0xff 0x12 0x66 0x88
+        , rgba 0x00 0xaa 0x23 0x88
+        , rgba 0x87 0x57 0xe8 0x88
+        , rgba 0x84 0xa8 0x36 0x88
+        ]
+    , mapRgbMode = rgba 0x00 0x00 0x00 0x00
+    , highlightColor = rgba 0xaf 0x12 0x12 0xff
+    , blockedColor = rgba 0xff 0xb9 0x47 0xff
+    , takenColor = rgba 0x23 0x45 0x45 0xff
+    , foodColor = rgba 0xfa 0xb7 0x05 0xff
+    , grassColor = rgba 0xaa 0xde 0x87 0xff
+    }
 
 draw :: AppSettings -> Window -> AppPlayState -> IO ()
 draw settings window@Window {renderer} state = do

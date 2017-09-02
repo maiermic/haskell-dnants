@@ -1,11 +1,20 @@
-module DNAnts.State.Map
-  ( MapConfig(..)
-  , defaultMapConfig
-  ) where
+{-# LANGUAGE DisambiguateRecordFields #-}
+{-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
 module DNAnts.State.Map where
 
-import DNAnts.State.Grid (Grid(_extents), defaultGrid)
+import Control.Lens.Operators
+-- TODO explizi imports
+import Control.Lens.Traversal
+import Control.Monad.Trans.Class
+import Control.Monad.Trans.State
+import DNAnts.State.Cell (Cell(Cell), defaultCell)
+import DNAnts.State.CellState
+       (CellType(Barrier, Food), cellType, defaultCellState)
+import DNAnts.State.Grid
+       (Grid(Grid, _cells, _extents), defaultGrid)
+import qualified DNAnts.State.Grid as G
 import DNAnts.State.Population (Population)
 import DNAnts.Types (Extents, defaultExtents)
 
@@ -35,4 +44,28 @@ data Map = Map
   , population :: Population
   }
 
-generateMap MapConfig {} = undefined
+generateMap :: MapConfig -> IO Map
+generateMap config@MapConfig {extents} = do
+  grid <- generateGrid extents
+  return $ Map {grid, population = undefined}
+
+--  population <- generatePopulation
+initialGrid :: Extents -> Cell -> GridCells
+initialGrid (gridWidth, gridHeight) cell =
+  replicate gridHeight $ replicate gridWidth cell
+
+type GridCells = [[Cell]]
+
+generateGrid :: Extents -> IO Grid
+generateGrid _extents = do
+  _cells <-
+    execStateT (generateGridCells _extents) $ initialGrid _extents $
+    Cell defaultCellState {cellType = Barrier}
+  return Grid {_cells, _extents}
+
+generateGridCells :: Extents -> StateT GridCells IO ()
+generateGridCells extends = do
+  traverse . traverse .= Cell defaultCellState {cellType = Food}
+
+generatePopulation :: StateT Population IO ()
+generatePopulation = undefined
