@@ -50,11 +50,11 @@ generateMap config@MapConfig {extents} = do
   return $ Map {grid, population = undefined}
 
 --  population <- generatePopulation
-initialGrid :: Extents -> Cell -> GridCells
+initialGrid :: Extents -> c -> GridCells c
 initialGrid (gridWidth, gridHeight) cell =
   replicate gridHeight $ replicate gridWidth cell
 
-type GridCells = [[Cell]]
+type GridCells c = [[c]]
 
 generateGrid :: Extents -> IO Grid
 generateGrid _extents = do
@@ -63,7 +63,7 @@ generateGrid _extents = do
     Cell defaultCellState {cellType = Barrier}
   return Grid {_cells, _extents}
 
-generateGridCells :: Extents -> StateT GridCells IO ()
+generateGridCells :: Extents -> StateT (GridCells Cell) IO ()
 generateGridCells extends = do
   traverse . traverse .= Cell defaultCellState {cellType = Food}
 
