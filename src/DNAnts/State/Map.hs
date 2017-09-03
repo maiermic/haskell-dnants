@@ -19,6 +19,7 @@ import DNAnts.State.Grid
 import qualified DNAnts.State.Grid as G
 import DNAnts.State.Population (Population(Population))
 import DNAnts.Types (Extents, defaultExtents)
+import Data.List.Split (chunksOf)
 
 data MapConfig = MapConfig
   { extents :: Extents
@@ -80,6 +81,15 @@ generateGridCells extents@(w, h) = do
 
 generatePopulation :: IO Population
 generatePopulation = return $ Population []
+
+{- |
+Grid of cell numbers as cells
+
+>>> gridCellNumbers 4 3
+[[0,1,2,3],[4,5,6,7],[8,9,10,11]]
+
+-}
+gridCellNumbers w h = take h $ chunksOf w [0 ..]
 
 {- |
 Grid of indeces as cells
