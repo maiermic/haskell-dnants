@@ -108,5 +108,6 @@
     <orderEntry type="library" name="hpc-0.6.0.3" level="project" />
     <orderEntry type="library" name="syb-0.7" level="project" />
     <orderEntry type="library" name="Glob-0.8.0" level="project" />
+    <orderEntry type="library" name="split-0.2.3.2" level="project" />
   </component>
 </module>
