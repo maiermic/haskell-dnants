@@ -115,6 +115,16 @@ gridIndices :: (Num t, Num t1, Enum t, Enum t1) => t1 -> t -> [[(t1, t)]]
 gridIndices w h = [[(x, y) | x <- [0 .. w - 1]] | y <- [0 .. h - 1]]
 
 {- |
+Infinite version of @gridIndices@.
+
+>>> addGridIndices $ gridCellNumbers 2 3
+[[(0,(0,0)),(1,(1,0))],[(2,(0,1)),(3,(1,1))],[(4,(0,2)),(5,(1,2))]]
+
+-}
+gridIndicesInf :: [[(Int, Int)]]
+gridIndicesInf = [[(x, y) | x <- [0..]] | y <- [0..]]
+
+{- |
 Add indices to grid cells.
 
 >>> addGridIndices [[0..2],[3..5]]
@@ -122,7 +132,7 @@ Add indices to grid cells.
 
 -}
 addGridIndices :: GridCells a -> GridCells (a, (Int, Int))
-addGridIndices g = zipGridCells (,) g (gridIndices 10 10)
+addGridIndices g = zipGridCells (,) g gridIndicesInf
 
 {- |
 Access cells in an area of the grid.
