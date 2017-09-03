@@ -83,6 +83,19 @@ generatePopulation :: IO Population
 generatePopulation = return $ Population []
 
 {- |
+Show mapped value but set without mapping.
+
+>>> 1 & showMapped succ %~ (* 3)
+6
+
+>>> [0..3] & mapped . showMapped succ %~ (* 3)
+[3,6,9,12]
+
+-}
+showMapped :: (s -> a) -> Lens s t a t
+showMapped f = lens f $ flip const
+
+{- |
 Grid of cell numbers as cells
 
 >>> gridCellNumbers 4 3
