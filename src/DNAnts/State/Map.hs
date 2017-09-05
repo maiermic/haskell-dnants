@@ -10,7 +10,7 @@ module DNAnts.State.Map where
 import Control.Lens
 import Control.Lens.Operators
 import Control.Lens.Traversal
-import Control.Monad (forM_)
+import Control.Monad (forM_, replicateM, replicateM_)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.State
@@ -26,7 +26,8 @@ import Data.List.Split (chunksOf)
 import Debug.Trace
 import Linear.V2 (V2(V2))
 import SDL (Point(P), Rectangle(Rectangle))
-import System.Random (Random, newStdGen, randomRs, split, randomR)
+import System.Random
+       (Random, newStdGen, randomR, randomRIO, randomRs, split)
 
 data MapConfig = MapConfig
   { extents :: Extents
@@ -102,7 +103,7 @@ addFoodRegions numFoodRegions extents = do
       (V2 w h) = extents - fromIntegral offset
       rng = (offset, w)
   centerPoints <-
-    liftIO $ take numFoodRegions <$> randomPoints ((offset, w), (offset, h))
+    liftIO $ randomPoints numFoodRegions ((offset, w), (offset, h))
   forM_ centerPoints $ \(x, y) -> addFoodRegion (rect x y w h)
 
 addFoodRegion :: MonadIO m => Region -> StateT (GridCells Cell) m ()
@@ -110,13 +111,13 @@ addFoodRegion r = addRegionRL r (cellOfType Food)
 
 addBarrierCells :: MonadIO m => Int -> V2 Int -> StateT (GridCells Cell) m ()
 addBarrierCells numBarriers extents@(V2 w h) =
-  forM_ [1..numBarriers] $ \_ -> addBarrierCellsGroup extents
+  replicateM_ numBarriers $ addBarrierCellsGroup extents
 
 addBarrierCellsGroup :: MonadIO m => V2 Int -> StateT (GridCells Cell) m ()
 addBarrierCellsGroup extents@(V2 w h) = do
   let barrierLength = w `div` 4
       gridCenter = extents `div` 2
-  excenter <- liftIO $ uncurry V2 . head <$> randomPoints (maxExcenterRng extents)
+  excenter <- liftIO $ uncurry V2 <$> randomPoint (maxExcenterRng extents)
   d <- liftIO randomDirection
   let direction = V2 d d
       startPos = gridCenter + excenter
@@ -125,44 +126,65 @@ addBarrierCellsGroup extents@(V2 w h) = do
 {- |
 Iteratively add barrier cells by randomly changing the iteration direction.
 -}
-addBarrierCellsGroupLoop :: MonadIO m => Int -> Int -> V2 Int -> V2 Int -> V2 Int -> StateT (GridCells Cell) m ()
+addBarrierCellsGroupLoop ::
+     MonadIO m
+  => Int
+  -> Int
+  -> V2 Int
+  -> V2 Int
+  -> V2 Int
+  -> StateT (GridCells Cell) m ()
 addBarrierCellsGroupLoop i barrierLength pos@(V2 x y) direction@(V2 dx dy) gridExtents
   | i == barrierLength = return ()
   | gridContainsPosition pos gridExtents = do
-      cellAtL x y .= cellOfType Barrier
-      (dx', dy') <- liftIO $ (,) <$> randomDirection <*> randomDirection
-      let dx'' = if i `mod` 3 == 0 then dx' else dx
-          dy'' = if i `mod` 5 == 0 then dy' else dy
-          direction' = V2 dx'' dy''
-      addBarrierCellsGroupLoop (i + 1) barrierLength (pos + direction') direction' gridExtents
+    cellAtL x y .= cellOfType Barrier
+    (dx', dy') <- liftIO $ (,) <$> randomDirection <*> randomDirection
+    let dx'' =
+          if i `mod` 3 == 0
+            then dx'
+            else dx
+        dy'' =
+          if i `mod` 5 == 0
+            then dy'
+            else dy
+        direction' = V2 dx'' dy''
+    addBarrierCellsGroupLoop
+      (i + 1)
+      barrierLength
+      (pos + direction')
+      direction'
+      gridExtents
   | otherwise = do
-      d <- liftIO randomDirection
-      let direction' = V2 d d
-      addBarrierCellsGroupLoop (i + 1) barrierLength (pos + direction') direction' gridExtents
+    d <- liftIO randomDirection
+    let direction' = V2 d d
+    addBarrierCellsGroupLoop
+      (i + 1)
+      barrierLength
+      (pos + direction')
+      direction'
+      gridExtents
 
 randomDirection :: IO Int
---randomDirection = newStdGen >>= fst . randomR (-1,1)
-randomDirection = do
-  gen <- newStdGen
-  return $ fst $ randomR (-1,1) gen
+randomDirection = randomRIO (-1,1)
 
-gridContainsPosition (V2 x y) (V2 w h) =
-  and [x >= 0, y >= 0, x < w, y < h]
+gridContainsPosition (V2 x y) (V2 w h) = and [x >= 0, y >= 0, x < w, y < h]
 
 maxExcenterRng :: Integral i => V2 i -> ((i, i), (i, i))
 maxExcenterRng extents = ((-x, x), (-y, y))
-  where (V2 x y) = extents `div` 4 `div` 2
+  where
+    (V2 x y) = extents `div` 4 `div` 2
 
 {- |
 Generate random points using different ranges for x- and y- coordinate.
 -}
-randomPoints :: (Random a, Random b) => ((a, a), (b, b)) -> IO [(a, b)]
-randomPoints (rngX, rngY) = do
-  (xGen, yGen) <- split <$> newStdGen
-  let
-      xs = randomRs rngX xGen
-      ys = randomRs rngY yGen
-  return $ zip xs ys
+randomPoints :: (Random a, Random b) => Int -> ((a, a), (b, b)) -> IO [(a, b)]
+randomPoints count bounds = replicateM count (randomPoint bounds)
+
+{- |
+Generate random point using different ranges for x- and y- coordinate.
+-}
+randomPoint :: (Random a, Random b) => ((a, a), (b, b)) -> IO (a, b)
+randomPoint (xBounds, yBounds) = (,) <$> randomRIO xBounds <*> randomRIO yBounds
 
 {- |
 Length of a vector.
