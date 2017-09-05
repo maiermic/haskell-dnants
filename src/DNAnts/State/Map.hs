@@ -10,6 +10,7 @@ module DNAnts.State.Map where
 import Control.Lens
 import Control.Lens.Operators
 import Control.Lens.Traversal
+import Control.Monad (forM_)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.State
@@ -20,12 +21,12 @@ import DNAnts.State.Grid
        (Grid(Grid, _cells, _extents), defaultGrid)
 import qualified DNAnts.State.Grid as G
 import DNAnts.State.Population (Population(Population))
-import DNAnts.Types (Extents, defaultExtents, rect)
+import DNAnts.Types (Extents, Region, defaultExtents, rect)
 import Data.List.Split (chunksOf)
 import Debug.Trace
 import Linear.V2 (V2(V2))
 import SDL (Point(P), Rectangle(Rectangle))
-import System.Random (newStdGen, randomRs)
+import System.Random (Random, newStdGen, randomRs)
 
 data MapConfig = MapConfig
   { extents :: Extents
@@ -85,15 +86,37 @@ this = lens id $ flip const
 cellOfType :: CellType -> Cell
 cellOfType cellType = Cell defaultCellState {cellType}
 
-generateGridCells :: MapConfig -> StateT (GridCells Cell) IO ()
-generateGridCells MapConfig {extents} = do
+generateGridCells :: MonadIO m => MapConfig -> StateT (GridCells Cell) m ()
+generateGridCells MapConfig {extents, numFoodRegions} = do
   let (w, h) = extents
   this .= initialGrid extents (cellOfType Plain)
-  dropL (h `div` 2) . traverse . dropL (w `div` 2) . traverse .= cellOfType Food
-  addRegionRL (rect 3 3 4 3) (cellOfType Barrier)
+  addFoodRegions numFoodRegions (V2 w h)
 
 generatePopulation :: IO Population
 generatePopulation = return $ Population []
+
+addFoodRegions :: MonadIO m => Int -> V2 Int -> StateT (GridCells Cell) m ()
+addFoodRegions numFoodRegions extents = do
+  let offset = 4
+      (V2 w h) = extents - fromIntegral offset
+      rng = (offset, w)
+  centerPoints <-
+    liftIO $ take numFoodRegions <$> randomPoints ((offset, w), (offset, h))
+  forM_ centerPoints $ \(x, y) -> addFoodRegion (rect x y w h)
+
+addFoodRegion :: MonadIO m => Region -> StateT (GridCells Cell) m ()
+addFoodRegion r = addRegionRL r (cellOfType Food)
+
+{- |
+Generate random points using different ranges for x- and y- coordinate.
+-}
+randomPoints :: (Random a, Random b) => ((a, a), (b, b)) -> IO [(a, b)]
+randomPoints (rngX, rngY) = do
+  xGen <- newStdGen
+  yGen <- newStdGen
+  let xs = randomRs rngX xGen
+      ys = randomRs rngY yGen
+  return $ zip xs ys
 
 {- |
 Length of a vector.
