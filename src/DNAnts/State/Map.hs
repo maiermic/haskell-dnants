@@ -54,8 +54,8 @@ data Map = Map
   }
 
 generateMap :: MapConfig -> IO Map
-generateMap config@MapConfig {extents} = do
-  grid <- generateGrid extents
+generateMap config = do
+  grid <- generateGrid config
   population <- generatePopulation
   return Map {grid, population}
 
@@ -71,9 +71,9 @@ type GridCells c = [[c]]
 emptyGridCells :: GridCells c
 emptyGridCells = []
 
-generateGrid :: Extents -> IO Grid
-generateGrid _extents = do
-  _cells <- execStateT (generateGridCells _extents) emptyGridCells
+generateGrid :: MapConfig -> IO Grid
+generateGrid config@MapConfig {extents = _extents} = do
+  _cells <- execStateT (generateGridCells config) emptyGridCells
   return Grid {_cells, _extents}
 
 {- |
@@ -85,8 +85,9 @@ this = lens id $ flip const
 cellOfType :: CellType -> Cell
 cellOfType cellType = Cell defaultCellState {cellType}
 
-generateGridCells :: Extents -> StateT (GridCells Cell) IO ()
-generateGridCells extents@(w, h) = do
+generateGridCells :: MapConfig -> StateT (GridCells Cell) IO ()
+generateGridCells MapConfig {extents} = do
+  let (w, h) = extents
   this .= initialGrid extents (cellOfType Plain)
   dropL (h `div` 2) . traverse . dropL (w `div` 2) . traverse .= cellOfType Food
   addRegionRL (rect 3 3 4 3) (cellOfType Barrier)
