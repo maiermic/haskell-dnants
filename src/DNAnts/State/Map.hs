@@ -6,11 +6,10 @@
 
 module DNAnts.State.Map where
 
--- TODO only use explicit imports
 import Control.Lens
 import Control.Lens.Operators
 import Control.Lens.Traversal
-import Control.Monad (forM_, replicateM, replicateM_)
+import Control.Monad (forM_, replicateM, replicateM_, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.State
@@ -23,6 +22,9 @@ import qualified DNAnts.State.Grid as G
 import DNAnts.State.Population (Population(Population))
 import DNAnts.Types (Extents, Region, defaultExtents, rect)
 import Data.List.Split (chunksOf)
+
+-- TODO only use explicit imports
+import Data.Maybe (maybeToList)
 import Debug.Trace
 import Linear.V2 (V2(V2))
 import SDL (Point(P), Rectangle(Rectangle))
@@ -88,11 +90,12 @@ cellOfType :: CellType -> Cell
 cellOfType cellType = Cell defaultCellState {cellType}
 
 generateGridCells :: MonadIO m => MapConfig -> StateT (GridCells Cell) m ()
-generateGridCells MapConfig {extents, numFoodRegions, numBarriers} = do
+generateGridCells MapConfig {extents, numFoodRegions, numBarriers, symmetric} = do
   let (w, h) = extents
   this .= initialGrid extents (cellOfType Plain)
   addFoodRegions numFoodRegions (V2 w h)
   addBarrierCells numBarriers (V2 w h)
+  when symmetric makeGridSymmetric
 
 generatePopulation :: IO Population
 generatePopulation = return $ Population []
@@ -165,7 +168,7 @@ addBarrierCellsGroupLoop i barrierLength pos@(V2 x y) direction@(V2 dx dy) gridE
       gridExtents
 
 randomDirection :: IO Int
-randomDirection = randomRIO (-1,1)
+randomDirection = randomRIO (-1, 1)
 
 gridContainsPosition (V2 x y) (V2 w h) = and [x >= 0, y >= 0, x < w, y < h]
 
@@ -173,6 +176,130 @@ maxExcenterRng :: Integral i => V2 i -> ((i, i), (i, i))
 maxExcenterRng extents = ((-x, x), (-y, y))
   where
     (V2 x y) = extents `div` 4 `div` 2
+
+makeGridSymmetric :: MonadIO m => StateT (GridCells Cell) m ()
+makeGridSymmetric = this %= toSymmetricGrid
+
+{- |
+Make grid point symmetric to center.
+
+>>> :{
+toSymmetricGrid
+  [ [0, 1, 2]
+  , [3, 4, 5]
+  , [6, 7, 8]
+  , [9, 10, 11]
+  , [12, 13, 14]
+  ]
+:}
+[[0,1,2],[3,4,9],[6,7,6],[9,4,3],[2,1,0]]
+
+>>> :{
+toSymmetricGrid
+  [ [0,1,2]
+  , [3,4,5]
+  , [6,7,8]
+  , [9,10,11]
+  , [12,13,14]
+  , [15,16,17]
+  ]
+:}
+[[0,1,2],[3,4,12],[6,7,9],[9,7,6],[12,4,3],[2,1,0]]
+
+>>> :{
+toSymmetricGrid
+  [ [ 0,  1,  2,  3,  4]
+  , [ 5,  6,  7,  8,  9]
+  , [10, 11, 12, 13, 14]
+  , [15, 16, 17, 18, 19]
+  , [20, 21, 22, 23, 24]
+  , [25, 26, 27, 28, 29]
+  , [30, 31, 32, 33, 34]
+  , [35, 36, 37, 38, 39]
+  , [40, 41, 42, 43, 44]
+  , [45, 46, 47, 48, 49]
+  ]
+:}
+[[0,1,2,3,4],[5,6,7,8,40],[10,11,12,36,35],[15,16,17,31,30],[20,21,22,26,25],[25,26,22,21,20],[30,31,17,16,15],[35,36,12,11,10],[40,8,7,6,5],[4,3,2,1,0]]
+
+-}
+toSymmetricGrid :: GridCells a -> GridCells a
+toSymmetricGrid grid =
+  let (w, h) = gridExtentsOf grid
+      (upper, middle, lower) = splitHalfs grid
+      middle' = maybeToList $ reflectVerticalInPlace <$> middle
+      upper' =
+        zipWith3
+          (\i r r' ->
+             let m = max (w - i) (w `div` 2 + w `mod` 2)
+             in take m r ++ reverse (take (w - m) r'))
+          [0 ..]
+          upper
+          (reverse lower)
+  in concat [upper', middle', reverse $ map reverse upper']
+
+{- |
+Reflect list at the middle and overwrite the second half of it.
+
+>>> reflectVerticalInPlace []
+[]
+
+>>> reflectVerticalInPlace [6]
+[6]
+
+>>> reflectVerticalInPlace [6, 7]
+[6,6]
+
+>>> reflectVerticalInPlace [6, 7, 8]
+[6,7,6]
+
+>>> reflectVerticalInPlace [6, 7, 8, 9]
+[6,7,7,6]
+
+>>> reflectVerticalInPlace [5, 6, 7, 8, 9]
+[5,6,7,6,5]
+
+-}
+reflectVerticalInPlace :: [a] -> [a]
+reflectVerticalInPlace [] = []
+reflectVerticalInPlace values =
+  let (upper, middle, lower) = splitHalfs values
+  in concat [upper, maybeToList middle, reverse upper]
+
+{- |
+Split a list of values in two halfs: @(firstHalf, middle, secondHalf)@
+If the list has even element count then @middle@ is @Nothing@.
+Otherwise, @middle@ is @Just@ the element in the middle of the list.
+
+>>> splitHalfs []
+([],Nothing,[])
+
+>>> splitHalfs [1,2]
+([1],Nothing,[2])
+
+>>> splitHalfs [1]
+([],Just 1,[])
+
+>>> splitHalfs [0..6]
+([0,1,2],Just 3,[4,5,6])
+
+>>> splitHalfs [0..5]
+([0,1,2],Nothing,[3,4,5])
+
+-}
+splitHalfs :: [a] -> ([a], Maybe a, [a])
+splitHalfs values =
+  let l = length values
+      l2 = l `div` 2
+      middle =
+        if even l
+          then l2
+          else l2 + 1
+  in ( take l2 values
+     , if even l
+         then Nothing
+         else Just (values !! l2)
+     , drop middle values)
 
 {- |
 Generate random points using different ranges for x- and y- coordinate.
