@@ -25,6 +25,8 @@ type Direction = (Int, Int)
 
 type Extents = (Int, Int)
 
+type Region = SDL.Rectangle Int
+
 defaultExtents :: Extents
 defaultExtents = (0, 0)
 
