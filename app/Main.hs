@@ -63,7 +63,11 @@ options =
       ["team"]
       (ReqArg
          (\arg settings ->
-            return settings {teamCodes = teamCodes settings ++ [arg]})
+            return
+              settings
+              { teamCodes = teamCodes settings ++ [arg]
+              , numTeams = numTeams settings + 1
+              })
          "team-code")
       "Add a team (multiple teams can be added)"
   , Option
