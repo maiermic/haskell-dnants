@@ -26,7 +26,7 @@ import Data.List.Split (chunksOf)
 import Debug.Trace
 import Linear.V2 (V2(V2))
 import SDL (Point(P), Rectangle(Rectangle))
-import System.Random (Random, newStdGen, randomRs, split)
+import System.Random (Random, newStdGen, randomRs, split, randomR)
 
 data MapConfig = MapConfig
   { extents :: Extents
@@ -87,10 +87,11 @@ cellOfType :: CellType -> Cell
 cellOfType cellType = Cell defaultCellState {cellType}
 
 generateGridCells :: MonadIO m => MapConfig -> StateT (GridCells Cell) m ()
-generateGridCells MapConfig {extents, numFoodRegions} = do
+generateGridCells MapConfig {extents, numFoodRegions, numBarriers} = do
   let (w, h) = extents
   this .= initialGrid extents (cellOfType Plain)
   addFoodRegions numFoodRegions (V2 w h)
+  addBarrierCells numBarriers (V2 w h)
 
 generatePopulation :: IO Population
 generatePopulation = return $ Population []
@@ -106,6 +107,51 @@ addFoodRegions numFoodRegions extents = do
 
 addFoodRegion :: MonadIO m => Region -> StateT (GridCells Cell) m ()
 addFoodRegion r = addRegionRL r (cellOfType Food)
+
+addBarrierCells :: MonadIO m => Int -> V2 Int -> StateT (GridCells Cell) m ()
+addBarrierCells numBarriers extents@(V2 w h) =
+  forM_ [1..numBarriers] $ \_ -> addBarrierCellsGroup extents
+
+addBarrierCellsGroup :: MonadIO m => V2 Int -> StateT (GridCells Cell) m ()
+addBarrierCellsGroup extents@(V2 w h) = do
+  let barrierLength = w `div` 4
+      gridCenter = extents `div` 2
+  excenter <- liftIO $ uncurry V2 . head <$> randomPoints (maxExcenterRng extents)
+  d <- liftIO randomDirection
+  let direction = V2 d d
+      startPos = gridCenter + excenter
+  addBarrierCellsGroupLoop 0 barrierLength startPos direction extents
+
+{- |
+Iteratively add barrier cells by randomly changing the iteration direction.
+-}
+addBarrierCellsGroupLoop :: MonadIO m => Int -> Int -> V2 Int -> V2 Int -> V2 Int -> StateT (GridCells Cell) m ()
+addBarrierCellsGroupLoop i barrierLength pos@(V2 x y) direction@(V2 dx dy) gridExtents
+  | i == barrierLength = return ()
+  | gridContainsPosition pos gridExtents = do
+      cellAtL x y .= cellOfType Barrier
+      (dx', dy') <- liftIO $ (,) <$> randomDirection <*> randomDirection
+      let dx'' = if i `mod` 3 == 0 then dx' else dx
+          dy'' = if i `mod` 5 == 0 then dy' else dy
+          direction' = V2 dx'' dy''
+      addBarrierCellsGroupLoop (i + 1) barrierLength (pos + direction') direction' gridExtents
+  | otherwise = do
+      d <- liftIO randomDirection
+      let direction' = V2 d d
+      addBarrierCellsGroupLoop (i + 1) barrierLength (pos + direction') direction' gridExtents
+
+randomDirection :: IO Int
+--randomDirection = newStdGen >>= fst . randomR (-1,1)
+randomDirection = do
+  gen <- newStdGen
+  return $ fst $ randomR (-1,1) gen
+
+gridContainsPosition (V2 x y) (V2 w h) =
+  and [x >= 0, y >= 0, x < w, y < h]
+
+maxExcenterRng :: Integral i => V2 i -> ((i, i), (i, i))
+maxExcenterRng extents = ((-x, x), (-y, y))
+  where (V2 x y) = extents `div` 4 `div` 2
 
 {- |
 Generate random points using different ranges for x- and y- coordinate.
