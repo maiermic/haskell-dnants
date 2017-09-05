@@ -26,7 +26,7 @@ import Data.List.Split (chunksOf)
 import Debug.Trace
 import Linear.V2 (V2(V2))
 import SDL (Point(P), Rectangle(Rectangle))
-import System.Random (Random, newStdGen, randomRs)
+import System.Random (Random, newStdGen, randomRs, split)
 
 data MapConfig = MapConfig
   { extents :: Extents
@@ -112,9 +112,9 @@ Generate random points using different ranges for x- and y- coordinate.
 -}
 randomPoints :: (Random a, Random b) => ((a, a), (b, b)) -> IO [(a, b)]
 randomPoints (rngX, rngY) = do
-  xGen <- newStdGen
-  yGen <- newStdGen
-  let xs = randomRs rngX xGen
+  (xGen, yGen) <- split <$> newStdGen
+  let
+      xs = randomRs rngX xGen
       ys = randomRs rngY yGen
   return $ zip xs ys
 
