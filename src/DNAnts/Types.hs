@@ -1,5 +1,6 @@
 module DNAnts.Types where
 
+import Control.Applicative (liftA2)
 import Foreign.C.Types (CInt)
 import GHC.Word (Word8)
 import qualified SDL
@@ -48,5 +49,27 @@ data AppSettings = AppSettings
   , teamCodes :: [String]
   } deriving (Show)
 
-rect :: CInt -> CInt -> CInt -> CInt -> SDL.Rectangle CInt
+rect :: a -> a -> a -> a -> SDL.Rectangle a
 rect x y w h = SDL.Rectangle (P $ V2 x y) (V2 w h)
+
+instance Real a => Real (V2 a) where
+  toRational = undefined -- TODO
+
+instance Enum a => Enum (V2 a) where
+  succ = undefined -- TODO
+  pred = undefined -- TODO
+  toEnum = undefined -- TODO
+  fromEnum = undefined -- TODO
+  enumFrom = undefined -- TODO
+  enumFromThen = undefined -- TODO
+  enumFromTo = undefined -- TODO
+  enumFromThenTo = undefined -- TODO
+
+instance Integral a => Integral (V2 a) where
+  quot = liftA2 quot
+  rem = liftA2 rem
+  div = liftA2 div
+  mod = liftA2 mod
+  quotRem = undefined -- TODO
+  divMod = undefined -- TODO
+  toInteger = undefined -- TODO

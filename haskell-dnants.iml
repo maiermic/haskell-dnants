@@ -109,5 +109,7 @@
     <orderEntry type="library" name="syb-0.7" level="project" />
     <orderEntry type="library" name="Glob-0.8.0" level="project" />
     <orderEntry type="library" name="split-0.2.3.2" level="project" />
+    <orderEntry type="library" name="random-1.1" level="project" />
+    <orderEntry type="library" name="random-1.1" level="project" />
   </component>
 </module>
