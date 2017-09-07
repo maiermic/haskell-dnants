@@ -1,6 +1,6 @@
 {-# LANGUAGE NamedFieldPuns #-}
 
-module DNAnts
+module DNAnts.AppEngine
   ( runApp
   ) where
 
