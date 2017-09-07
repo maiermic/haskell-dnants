@@ -6,7 +6,7 @@
 
 module DNAnts.AppEngine where
 
-import DNAnts.Lens (getsM, (.=>))
+import DNAnts.Lens (getsM, (.=>), (.=>>), this)
 import Control.Lens
 import Control.Lens.Operators
 import Control.Lens.Traversal
