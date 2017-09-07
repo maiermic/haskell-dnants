@@ -13,6 +13,7 @@ import Control.Monad (forM_, replicateM, replicateM_, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.State
+import DNAnts.Lens (this)
 import DNAnts.State.Ant
 import DNAnts.State.Cell (Cell(Cell), defaultCell)
 import DNAnts.State.CellState
@@ -80,12 +81,6 @@ generateGrid :: MapConfig -> IO Grid
 generateGrid config@MapConfig {extents = _extents} = do
   _cells <- execStateT (generateGridCells config) emptyGridCells
   return Grid {_cells, _extents}
-
-{- |
-Lens of state in @StateT@.
--}
-this :: Lens' a a
-this = lens id $ flip const
 
 cellOfType :: CellType -> Cell
 cellOfType cellType = Cell defaultCellState {cellType}
