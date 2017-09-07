@@ -13,7 +13,6 @@ import Control.Monad (forM_, replicateM, replicateM_, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.State
-import DNAnts.Lens (this)
 import DNAnts.State.Ant
 import DNAnts.State.Cell (Cell(Cell), defaultCell)
 import DNAnts.State.CellState
@@ -207,7 +206,7 @@ maxExcenterRng extents = ((-x, x), (-y, y))
     (V2 x y) = extents `divA` 4 `divA` 2
 
 makeGridSymmetric :: MonadIO m => StateT (GridCells Cell) m ()
-makeGridSymmetric = this %= toSymmetricGrid
+makeGridSymmetric = id %= toSymmetricGrid
 
 {- |
 Make grid point symmetric to center.

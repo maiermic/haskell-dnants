@@ -6,7 +6,6 @@
 
 module DNAnts.AppEngine where
 
-import DNAnts.Lens (getsM, (.=>), (.=>>), this)
 import Control.Lens
 import Control.Lens.Operators
 import Control.Lens.Traversal
@@ -16,6 +15,7 @@ import Control.Monad.Trans.State.Lazy
        (StateT(StateT), execStateT, get, put)
 import Control.Monad.Writer.DNAnts.ResourceM
        (ResourceM, onReleaseResources, runResourceM)
+import DNAnts.Lens ((.=>), (.=>>), getsM)
 import DNAnts.State.AppPlayState
        (AppPlayState, defaultAppPlayState, draw)
 import DNAnts.Types

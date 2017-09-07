@@ -22,16 +22,6 @@ getsM :: Monad m => (s -> m a) -> StateT s m a
 getsM f = StateT $ \s -> (, s) <$> f s
 
 {- |
-Lens of state in @StateT@.
-
->>> 42 ^. this
-42
-
--}
-this :: Lens' a a
-this = lens id $ flip const
-
-{- |
 Run monadic action on state of a getter lens.
 
 >>> flip execStateT ("first",2) $ viewM _1 putStrLn
@@ -53,7 +43,7 @@ Run monadic action on state of a focusing lens like.
 -}
 viewEachM ::
      Monad m => LensLike' (Focusing m c) t s -> (s -> m c) -> StateT t m c
-viewEachM g f = zoom g $ this .=> f
+viewEachM g f = zoom g $ id .=> f
 
 infix 4 .=>, .=>>
 
