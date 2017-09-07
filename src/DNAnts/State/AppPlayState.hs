@@ -23,7 +23,7 @@ import DNAnts.State.Map
         MapConfig(extents, numBarriers, numFoodRegions, numGrassRegions,
                   numTeams, symmetric, teamSize),
         defaultMapConfig, generateMap)
-import DNAnts.State.Population (Population(Population))
+import DNAnts.State.Population (Population)
 import DNAnts.Types
        (AppSettings(AppSettings, framesPerSecond, gridExtents,
                     gridSpacing, initTeamSize, numTeams),
@@ -151,7 +151,7 @@ renderObjects AppSettings {gridSpacing} window AppPlayState { gameState
                                                             , sprites
                                                             , teamColors
                                                             } =
-  let (Population teams) = populFront gameState
+  let teams = populFront gameState
   in forM_ (zip teamColors teams) $
      uncurry $ \teamColor AntTeam {spawnPoints, ants} -> do
        forM_ spawnPoints $ \spawnPoint ->

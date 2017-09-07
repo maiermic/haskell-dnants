@@ -21,7 +21,7 @@ import DNAnts.State.CellState
 import DNAnts.State.Grid
        (Grid(Grid, _cells, _extents), defaultGrid)
 import qualified DNAnts.State.Grid as G
-import DNAnts.State.Population (Population(Population))
+import DNAnts.State.Population (Population)
 import DNAnts.Types (Extents, Region, defaultExtents, divA, rect)
 import Data.List.Split (chunksOf)
 
@@ -116,7 +116,7 @@ addSpawnPoints spawnPoints =
 getPopulation :: MapConfig -> Population
 getPopulation MapConfig {extents = (w, h), numTeams, teamSize} =
   let spawnPoints = getSpawnPoints numTeams (V2 w h)
-  in Population $ zipWith createTeam [0 ..] spawnPoints
+  in zipWith createTeam [0 ..] spawnPoints
   where
     createTeam teamID spawnPoint =
       AntTeam
