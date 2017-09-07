@@ -6,17 +6,6 @@ import GHC.Word (Word8)
 import qualified SDL
 import SDL.Vect (Point(P), V2(V2), V4(V4))
 
-data Orientation
-  = None
-  | North
-  | South
-  | East
-  | West
-  | NorthEast
-  | SouthEast
-  | SouthWest
-  | NorthWest
-
 type Point = (Int, Int)
 
 type Position = (Int, Int)
@@ -54,24 +43,5 @@ data AppSettings = AppSettings
 rect :: a -> a -> a -> a -> SDL.Rectangle a
 rect x y w h = SDL.Rectangle (P $ V2 x y) (V2 w h)
 
-instance Real a => Real (V2 a) where
-  toRational = undefined -- TODO
-
-instance Enum a => Enum (V2 a) where
-  succ = undefined -- TODO
-  pred = undefined -- TODO
-  toEnum = undefined -- TODO
-  fromEnum = undefined -- TODO
-  enumFrom = undefined -- TODO
-  enumFromThen = undefined -- TODO
-  enumFromTo = undefined -- TODO
-  enumFromThenTo = undefined -- TODO
-
-instance Integral a => Integral (V2 a) where
-  quot = liftA2 quot
-  rem = liftA2 rem
-  div = liftA2 div
-  mod = liftA2 mod
-  quotRem = undefined -- TODO
-  divMod = undefined -- TODO
-  toInteger = undefined -- TODO
+divA :: (Integral b, Applicative f) => f b -> f b -> f b
+divA v1 v2 = div <$> v1 <*> v2

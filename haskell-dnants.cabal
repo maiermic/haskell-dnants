@@ -29,6 +29,7 @@ library
                      , DNAnts.State.Population
                      , DNAnts.SVG
                      , DNAnts.Types
+                     , DNAnts.Types.Orientation
                      , DNAnts.View.Window
                      , DNAnts.View.Sprites
   build-depends:       base >= 4.7 && < 5

@@ -1,9 +1,12 @@
 {-# LANGUAGE DisambiguateRecordFields #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE LambdaCase #-}
 
 module DNAnts.State.AppPlayState where
 
+import DNAnts.State.Ant
+       (Ant(Ant), AntTeam(AntTeam, ants, spawnPoints))
 import DNAnts.State.Cell (Cell(Cell), defaultCell)
 import DNAnts.State.CellState
        (CellState(CellState, cellType),
@@ -20,10 +23,14 @@ import DNAnts.State.Map
         MapConfig(extents, numBarriers, numFoodRegions, numGrassRegions,
                   numTeams, symmetric, teamSize),
         defaultMapConfig, generateMap)
+import DNAnts.State.Population (Population(Population))
 import DNAnts.Types
        (AppSettings(AppSettings, framesPerSecond, gridExtents,
                     gridSpacing, initTeamSize, numTeams),
-        Color, Position, rect, rgb, rgba)
+        Color, Position, divA, rect, rgb, rgba)
+import DNAnts.Types.Orientation
+       (Orientation, directionOfOrientation, noOrientation)
+import qualified DNAnts.Types.Orientation as Orientation
 import DNAnts.View.Sprites (Sprite, Sprites(Sprites, rock, sugah1))
 import DNAnts.View.Window (Window(Window, renderer, window))
 import Data.Foldable (forM_)
@@ -31,6 +38,7 @@ import Foreign.C.Types (CInt)
 import GHC.Word (Word32)
 import qualified SDL
 import SDL (($=))
+import SDL.Vect (Point(P), V2(V2))
 
 -- TODO _app
 data AppPlayState = AppPlayState
@@ -119,6 +127,7 @@ draw settings window@Window {renderer} state = do
   SDL.clear renderer
   SDL.rendererDrawBlendMode renderer $= SDL.BlendMod
   renderMap settings window state
+  renderObjects settings window state
   SDL.present renderer
 
 renderMap :: AppSettings -> Window -> AppPlayState -> IO ()
@@ -136,3 +145,70 @@ renderCell AppSettings {gridSpacing} Window {renderer} texture (cellX, cellY) = 
         rect (fromIntegral cellX * size) (fromIntegral cellY * size) size size
   SDL.rendererDrawBlendMode renderer $= SDL.BlendMod
   SDL.copy renderer texture Nothing (Just dstRect)
+
+renderObjects :: AppSettings -> Window -> AppPlayState -> IO ()
+renderObjects AppSettings {gridSpacing} window AppPlayState { gameState
+                                                            , sprites
+                                                            , teamColors
+                                                            } =
+  let (Population teams) = populFront gameState
+  in forM_ (zip teamColors teams) $
+     uncurry $ \teamColor AntTeam {spawnPoints, ants} -> do
+       forM_ spawnPoints $ \spawnPoint ->
+         drawCellCircle
+           window
+           (fromIntegral <$> spawnPoint)
+           (fromIntegral gridSpacing)
+           noOrientation
+           teamColor
+       forM_ ants renderAnt
+
+type LineSegment = (Point V2 CInt, Point V2 CInt)
+
+drawCellCircle :: Window -> V2 CInt -> CInt -> Orientation -> Color -> IO ()
+drawCellCircle Window {renderer} pos gridSpacing ornt color = do
+  let radiusOuter :: CInt
+      radiusOuter = gridSpacing - 1
+      radiusOuterV :: V2 CInt
+      radiusOuterV =
+        fromIntegral <$> directionOfOrientation ornt * fromIntegral radiusOuter
+      radiusInner = gridSpacing - 3
+      gridSpacingV :: V2 CInt
+      gridSpacingV = fromIntegral gridSpacing
+      (V2 centerX centerY) =
+        pos * gridSpacingV + gridSpacingV `divA` 2 + radiusOuterV
+      getLinePoints :: CInt -> [Point V2 CInt]
+      getLinePoints r =
+        let x0 = centerX - r + 1
+            x1 = centerX - (r `div` 2) - 1
+            x2 = centerX
+            x3 = centerX + (r `div` 2) + 1
+            x4 = centerX + r - 1
+            y0 = centerY - r + 1
+            y1 = centerY - (r `div` 2) - 1
+            y2 = centerY
+            y3 = centerY + (r `div` 2) + 1
+            y4 = centerY + r - 1
+        in map P $
+           [ V2 x2 y0 -- center top
+           , V2 x3 y1
+           , V2 x4 y2 -- right center
+           , V2 x3 y3
+           , V2 x2 y4 -- center
+           , V2 x1 y3
+           , V2 x0 y2 -- left center
+           , V2 x1 y1
+           , V2 x2 y0 -- center top
+           ]
+      lineSegments :: [LineSegment]
+      lineSegments =
+        concatMap (toLineSegment . getLinePoints) $
+        reverse [radiusInner .. radiusOuter]
+  SDL.rendererDrawColor renderer $= color
+  forM_ lineSegments $ uncurry $ SDL.drawLine renderer
+
+toLineSegment :: [Point V2 CInt] -> [LineSegment]
+toLineSegment points = zip points $ tail points
+
+renderAnt :: Ant -> IO ()
+renderAnt ant = return ()

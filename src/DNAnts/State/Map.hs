@@ -13,14 +13,16 @@ import Control.Monad (forM_, replicateM, replicateM_, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.State
+import DNAnts.State.Ant
 import DNAnts.State.Cell (Cell(Cell), defaultCell)
 import DNAnts.State.CellState
-       (CellType(Barrier, Food, Plain), cellType, defaultCellState)
+       (CellType(Barrier, Food, Plain, SpawnPoint), cellType,
+        defaultCellState)
 import DNAnts.State.Grid
        (Grid(Grid, _cells, _extents), defaultGrid)
 import qualified DNAnts.State.Grid as G
 import DNAnts.State.Population (Population(Population))
-import DNAnts.Types (Extents, Region, defaultExtents, rect)
+import DNAnts.Types (Extents, Region, defaultExtents, divA, rect)
 import Data.List.Split (chunksOf)
 
 -- TODO only use explicit imports
@@ -60,8 +62,7 @@ data Map = Map
 generateMap :: MapConfig -> IO Map
 generateMap config = do
   grid <- generateGrid config
-  population <- generatePopulation
-  return Map {grid, population}
+  return Map {grid, population = getPopulation config}
 
 {- |
 Create grid filled with cells of an initial value.
@@ -90,15 +91,48 @@ cellOfType :: CellType -> Cell
 cellOfType cellType = Cell defaultCellState {cellType}
 
 generateGridCells :: MonadIO m => MapConfig -> StateT (GridCells Cell) m ()
-generateGridCells MapConfig {extents, numFoodRegions, numBarriers, symmetric} = do
+generateGridCells MapConfig { extents
+                            , numFoodRegions
+                            , numBarriers
+                            , symmetric
+                            , numTeams
+                            } = do
   let (w, h) = extents
   this .= initialGrid extents (cellOfType Plain)
   addFoodRegions numFoodRegions (V2 w h)
   addBarrierCells numBarriers (V2 w h)
   when symmetric makeGridSymmetric
+  addSpawnPoints $ getSpawnPoints numTeams (V2 w h)
 
-generatePopulation :: IO Population
-generatePopulation = return $ Population []
+getSpawnPoints :: Int -> V2 Int -> [V2 Int]
+getSpawnPoints numTeams extents =
+  let center = extents `divA` 2
+  in case numTeams of
+       0 -> []
+       1 -> [center]
+       otherwise ->
+         let spawnCorners =
+               take numTeams $ [V2 (-1) (-1), V2 1 1, V2 1 (-1), V2 (-1) 1]
+         in map (\corner -> center + corner * extents `divA` 3) spawnCorners
+
+addSpawnPoints :: MonadIO m => [V2 Int] -> StateT (GridCells Cell) m ()
+addSpawnPoints spawnPoints =
+  forM_ spawnPoints $ \(V2 x y) -> cellAtL x y .= cellOfType SpawnPoint
+
+getPopulation :: MapConfig -> Population
+getPopulation MapConfig {extents = (w, h), numTeams, teamSize} =
+  let spawnPoints = getSpawnPoints numTeams (V2 w h)
+  in Population $ zipWith createTeam [0 ..] spawnPoints
+  where
+    createTeam teamID spawnPoint =
+      AntTeam
+      { teamID
+      , teamSize
+      , client = error "no client defined"
+      , ants = []
+      , spawnPoints = [spawnPoint]
+      , numFood = 0
+      }
 
 addFoodRegions :: MonadIO m => Int -> V2 Int -> StateT (GridCells Cell) m ()
 addFoodRegions numFoodRegions extents = do
@@ -119,7 +153,7 @@ addBarrierCells numBarriers extents@(V2 w h) =
 addBarrierCellsGroup :: MonadIO m => V2 Int -> StateT (GridCells Cell) m ()
 addBarrierCellsGroup extents@(V2 w h) = do
   let barrierLength = w `div` 4
-      gridCenter = extents `div` 2
+      gridCenter = extents `divA` 2
   excenter <- liftIO $ uncurry V2 <$> randomPoint (maxExcenterRng extents)
   d <- liftIO randomDirection
   let direction = V2 d d
@@ -175,7 +209,7 @@ gridContainsPosition (V2 x y) (V2 w h) = and [x >= 0, y >= 0, x < w, y < h]
 maxExcenterRng :: Integral i => V2 i -> ((i, i), (i, i))
 maxExcenterRng extents = ((-x, x), (-y, y))
   where
-    (V2 x y) = extents `div` 4 `div` 2
+    (V2 x y) = extents `divA` 4 `divA` 2
 
 makeGridSymmetric :: MonadIO m => StateT (GridCells Cell) m ()
 makeGridSymmetric = this %= toSymmetricGrid
@@ -329,7 +363,7 @@ Distance of a position to the center of a grid in percentage.
 centerDist :: (Floating f, Integral i) => V2 i -> V2 i -> V2 i -> f
 centerDist pos center extents =
   len $
-  ((fromIntegral <$> abs (pos - center)) / (fromIntegral <$> (extents `div` 2))) /
+  ((fromIntegral <$> abs (pos - center)) / (fromIntegral <$> (extents `divA` 2))) /
   sqrt 2
 
 {- |
@@ -341,7 +375,7 @@ addRegionRL center extents c' = do
   grid <- get
   gen <- liftIO newStdGen
   let topLeft :: V2 Int
-      topLeft = center - extents `div` 2
+      topLeft = center - extents `divA` 2
       region :: Lens' (GridCells a) (GridCells a)
       region =
         areaRL $ intersectRegion (Rectangle (P topLeft) extents) $
