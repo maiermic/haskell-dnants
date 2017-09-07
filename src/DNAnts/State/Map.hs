@@ -110,7 +110,7 @@ getSpawnPoints numTeams extents =
   in case numTeams of
        0 -> []
        1 -> [center]
-       otherwise ->
+       _ ->
          let spawnCorners =
                take numTeams $ [V2 (-1) (-1), V2 1 1, V2 1 (-1), V2 (-1) 1]
          in map (\corner -> center + corner * extents `divA` 3) spawnCorners
