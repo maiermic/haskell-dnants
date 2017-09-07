@@ -26,22 +26,21 @@ import DNAnts.View.Sprites (loadSprites)
 
 type FrameTime = Word32
 
-gameLoop :: StateT (AppSettings, Window, AppPlayState, FrameTime) IO ()
+gameLoop :: StateT (AppSettings, Window, AppPlayState) IO ()
 gameLoop = do
-  (settings, window, state, lastFrameTime) <- get
+  (settings, window, state) <- get
   events <- liftIO $ map SDL.eventPayload <$> SDL.pollEvents
   let quit = SDL.QuitEvent `elem` events
   unless quit $ do
     frameTime <- liftIO SDL.Raw.getTicks
-    let deltaTime = frameTime - lastFrameTime
-        minFrameTime = fromIntegral (1000 `div` framesPerSecond settings)
+    let minFrameTime = fromIntegral (1000 `div` framesPerSecond settings)
     frameTimeAfter <-
       liftIO $ do
         draw settings window state
         SDL.Raw.getTicks
     when (frameTimeAfter - frameTime < minFrameTime) $
       liftIO $ SDL.delay $ minFrameTime - (frameTimeAfter - frameTime)
-    put (settings, window, state, frameTime)
+    put (settings, window, state)
     gameLoop
 
 runApp :: String -> AppSettings -> IO ()
@@ -54,11 +53,10 @@ runApp title settings@AppSettings {gridExtents, gridSpacing} =
        onReleaseResources SDL.quit
        window <- getWindow (pack title) windowWidth windowHeight
        renderer <- getRenderer window
-       initialFrameTime <- liftIO SDL.Raw.getTicks
        sprites <- loadSprites renderer
        state <- liftIO $ defaultAppPlayState settings sprites
        liftIO $
          execStateT
            gameLoop
-           (settings, Window {renderer, window}, state, initialFrameTime)
+           (settings, Window {renderer, window}, state)
        return ()
