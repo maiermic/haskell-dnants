@@ -1,13 +1,19 @@
+{-# LANGUAGE DisambiguateRecordFields #-}
+{-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE TemplateHaskell #-}
 
-module DNAnts.AppEngine
-  ( runApp
-  ) where
+module DNAnts.AppEngine where
 
-import Control.Monad (unless, when)
+import DNAnts.Lens (getsM, (.=>))
+import Control.Lens
+import Control.Lens.Operators
+import Control.Lens.Traversal
+import Control.Monad (Monad, unless, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Trans.State.Lazy
-       (StateT, execStateT, get, put)
+       (StateT(StateT), execStateT, get, put)
 import Control.Monad.Writer.DNAnts.ResourceM
        (ResourceM, onReleaseResources, runResourceM)
 import DNAnts.State.AppPlayState
@@ -16,47 +22,61 @@ import DNAnts.Types
        (AppSettings(AppSettings, framesPerSecond, gridExtents,
                     gridSpacing),
         rgb)
+import DNAnts.View.Sprites (loadSprites)
 import DNAnts.View.Window
        (Window(Window, renderer, window), getRenderer, getWindow)
 import Data.Text (pack)
 import GHC.Word (Word32, Word8)
 import qualified SDL
 import qualified SDL.Raw
-import DNAnts.View.Sprites (loadSprites)
 
 type FrameTime = Word32
 
-gameLoop :: StateT (AppSettings, Window, AppPlayState) IO ()
+data AppEngine = AppEngine
+  { _settings :: AppSettings
+  , _state :: AppPlayState
+  , _window :: Window
+  , _isRunning :: Bool
+  }
+
+makeLenses ''AppEngine
+
+gameLoop :: StateT AppEngine IO ()
 gameLoop = do
-  (settings, window, state) <- get
   events <- liftIO $ map SDL.eventPayload <$> SDL.pollEvents
   let quit = SDL.QuitEvent `elem` events
   unless quit $ do
-    frameTime <- liftIO SDL.Raw.getTicks
-    let minFrameTime = fromIntegral (1000 `div` framesPerSecond settings)
-    frameTimeAfter <-
-      liftIO $ do
-        draw settings window state
-        SDL.Raw.getTicks
-    when (frameTimeAfter - frameTime < minFrameTime) $
-      liftIO $ SDL.delay $ minFrameTime - (frameTimeAfter - frameTime)
-    put (settings, window, state)
+    getsM drawFrame
     gameLoop
 
 runApp :: String -> AppSettings -> IO ()
-runApp title settings@AppSettings {gridExtents, gridSpacing} =
+runApp title _settings@AppSettings {gridExtents, gridSpacing} =
   let (gridWidth, gridHeight) = gridExtents
       windowWidth = fromIntegral (gridWidth * gridSpacing)
       windowHeight = fromIntegral (gridHeight * gridSpacing)
   in runResourceM $ do
        liftIO $ SDL.initialize [SDL.InitVideo]
        onReleaseResources SDL.quit
-       window <- getWindow (pack title) windowWidth windowHeight
-       renderer <- getRenderer window
+       _window <- getWindow (pack title) windowWidth windowHeight
+       renderer <- getRenderer _window
        sprites <- loadSprites renderer
-       state <- liftIO $ defaultAppPlayState settings sprites
+       _state <- liftIO $ defaultAppPlayState _settings sprites
        liftIO $
          execStateT
            gameLoop
-           (settings, Window {renderer, window}, state)
+           AppEngine
+           { _settings
+           , _window = Window {renderer, window = _window}
+           , _state
+           , _isRunning = True
+           }
        return ()
+
+drawFrame :: AppEngine -> IO ()
+drawFrame AppEngine {_settings, _window, _state} = do
+  frameTime <- liftIO SDL.Raw.getTicks
+  draw _settings _window _state
+  frameTimeAfter <- SDL.Raw.getTicks
+  let minFrameTime = fromIntegral (1000 `div` framesPerSecond _settings)
+  when (frameTimeAfter - frameTime < minFrameTime) $
+    liftIO $ SDL.delay $ minFrameTime - (frameTimeAfter - frameTime)
