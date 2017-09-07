@@ -96,7 +96,7 @@ defaultAppPlayState appSettings@AppSettings {gridExtents, gridSpacing, numTeams}
   return
     AppPlayState
     { active = True
-    , paused = False
+    , paused = True
     , step = False
     , showCommands = True
     , showInTraces = True
