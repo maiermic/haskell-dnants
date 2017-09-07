@@ -107,10 +107,10 @@ addFoodRegions numFoodRegions extents = do
       rng = (offset, w)
   centerPoints <-
     liftIO $ randomPoints numFoodRegions ((offset, w), (offset, h))
-  forM_ centerPoints $ \(x, y) -> addFoodRegion (rect x y w h)
+  forM_ centerPoints $ \(x, y) -> addFoodRegion (V2 x y) (V2 w h)
 
-addFoodRegion :: MonadIO m => Region -> StateT (GridCells Cell) m ()
-addFoodRegion r = addRegionRL r (cellOfType Food)
+addFoodRegion :: MonadIO m => V2 Int -> V2 Int -> StateT (GridCells Cell) m ()
+addFoodRegion center extents = addRegionRL center extents (cellOfType Food)
 
 addBarrierCells :: MonadIO m => Int -> V2 Int -> StateT (GridCells Cell) m ()
 addBarrierCells numBarriers extents@(V2 w h) =
@@ -336,31 +336,56 @@ centerDist pos center extents =
 Change each cell of a region depending on the distance to the center and a random value.
 -}
 addRegionRL ::
-     MonadIO m => Rectangle Int -> Cell -> StateT (GridCells Cell) m ()
-addRegionRL (Rectangle (P center) extents@(V2 w h)) c' =
+     MonadIO m => V2 Int -> V2 Int -> Cell -> StateT (GridCells Cell) m ()
+addRegionRL center extents c' = do
+  grid <- get
+  gen <- liftIO newStdGen
   let topLeft :: V2 Int
       topLeft = center - extents `div` 2
       region :: Lens' (GridCells a) (GridCells a)
-      region = areaRL (Rectangle (P topLeft) extents)
+      region =
+        areaRL $ intersectRegion (Rectangle (P topLeft) extents) $
+        gridRegionOf grid
       changeCell :: (Cell, (Int, Int), Double) -> Cell
       changeCell (c, (ax, ay), rnd) =
         let d = centerDist (V2 ax ay) center extents
         in if (V2 ax ay == center) || (d < 0.8 * rnd)
              then c'
              else c
-  in do grid <- get
-        gen <- liftIO newStdGen
-        let randomGrid :: GridCells Double
-            randomGrid =
-              uncurry gridOfCells (gridExtentsOf grid) $ randomRs (0.0, 1.0) gen
-            addGridIndicesAndRandoms ::
-                 GridCells a -> GridCells (a, (Int, Int), Double)
-            addGridIndicesAndRandoms grid =
-              zipGridCells3 (,,) grid gridIndicesInf randomGrid
-        let gr =
-              addGridIndicesAndRandoms grid ^. region .
-              to (map $ map changeCell)
-        region .= gr
+      randomGrid :: GridCells Double
+      randomGrid =
+        uncurry gridOfCells (gridExtentsOf grid) $ randomRs (0.0, 1.0) gen
+      addGridIndicesAndRandoms ::
+           GridCells a -> GridCells (a, (Int, Int), Double)
+      addGridIndicesAndRandoms grid =
+        zipGridCells3 (,,) grid gridIndicesInf randomGrid
+      gr = addGridIndicesAndRandoms grid ^. region . to (map $ map changeCell)
+  region .= gr
+
+{- |
+Calculate intersection of two regions.
+
+>>> intersectRegion (rect (-4) (-4) 16 16) (rect 0 0 20 20)
+Rectangle (P (V2 0 0)) (V2 12 12)
+
+-}
+intersectRegion :: Region -> Region -> Region
+intersectRegion r1 r2 =
+  let (Rectangle (P topLeft1) extents1) = r1
+      (Rectangle (P topLeft2) extents2) = r2
+      topLeft = max <$> topLeft1 <*> topLeft2
+      lowerRight = min <$> (topLeft1 + extents1) <*> (topLeft2 + extents2)
+  in Rectangle (P topLeft) (lowerRight - topLeft)
+
+{- |
+Get region of a grid.
+
+>>> gridRegionOf $ gridCellNumbers 3 4
+Rectangle (P (V2 0 0)) (V2 3 4)
+
+-}
+gridRegionOf :: GridCells a -> Region
+gridRegionOf rows = Rectangle (P (V2 0 0)) $ uncurry V2 $ gridExtentsOf rows
 
 {- |
 Get extents of a grid.
