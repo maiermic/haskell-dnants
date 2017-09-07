@@ -98,7 +98,7 @@ generateGridCells MapConfig { extents
                             , numTeams
                             } = do
   let (w, h) = extents
-  this .= initialGrid extents (cellOfType Plain)
+  put $ initialGrid extents (cellOfType Plain)
   addFoodRegions numFoodRegions (V2 w h)
   addBarrierCells numBarriers (V2 w h)
   when symmetric makeGridSymmetric
