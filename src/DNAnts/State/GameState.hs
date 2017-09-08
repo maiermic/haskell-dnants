@@ -19,7 +19,7 @@ import DNAnts.State.Cell (isCellTaken)
 import DNAnts.State.Grid
 import DNAnts.State.Map
 import DNAnts.State.Population (Population)
-import DNAnts.Types (AppSettings, Extents)
+import DNAnts.Types
 import Lens.Family2.State.Lazy (zoom)
 import SDL.Vect (V2(V2))
 
@@ -66,7 +66,7 @@ spawnAnts = do
   grid <- use gridFront
   zoom (populFront . traverse) $ do
     sps <- use spawnPoints
-    forM_ sps $ \(V2 x y) -> do
+    forM_ sps $ \spawnPoint@(V2 x y) -> do
       numFood .=> debugShow "numFood"
       AT.teamSize .=> debugShow "AT.teamSize"
       unlessL (ants . to length .>=. AT.teamSize) $ do
@@ -74,11 +74,11 @@ spawnAnts = do
           AT.teamSize += 1
           numFood -= 8
         let (Just baseCell) = grid ^? cells . cellAtL x y
-        when (isCellTaken baseCell) $ addAntAt x y
-        addAntAt x y
+        when (isCellTaken baseCell) $ addAntAt spawnPoint
+        addAntAt spawnPoint
 
-addAntAt :: Int -> Int -> StateT AntTeam IO ()
-addAntAt x y = do
+addAntAt :: Position -> StateT AntTeam IO ()
+addAntAt pos = do
   team <- get
-  ants %= \ants' -> ants' ++ [createAnt team (length ants') (x, y)]
+  ants %= \ants' -> ants' ++ [createAnt team (length ants') pos]
   ants .=>> debugShow "ants" . length

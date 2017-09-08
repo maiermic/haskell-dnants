@@ -8,20 +8,22 @@ import Control.Lens (makeLenses)
 import Foreign.C.Types (CInt)
 import GHC.Word (Word8)
 import qualified SDL
-import SDL.Vect (Point(P), V2(V2), V3(V3), V4(V4))
+import SDL.Vect
 
-type Point = (Int, Int)
+type Position = V2 Int
 
-type Position = (Int, Int)
+type Direction = V2 Int
 
-type Direction = (Int, Int)
-
-type Extents = (Int, Int)
+type Extents = V2 Int
 
 type Region = SDL.Rectangle Int
 
 defaultExtents :: Extents
-defaultExtents = (0, 0)
+defaultExtents = V2 0 0
+
+-- | 'uncurry' converts a curried function to a function on vectors.
+uncurryV2 :: (a -> a -> b) -> (V2 a -> b)
+uncurryV2 f (V2 x y) = f x y
 
 type Color = V4 Word8
 
@@ -56,8 +58,7 @@ maySpeedUp AppSettings {_roundsPerSecond, _framesPerSecond} =
   _roundsPerSecond < _framesPerSecond
 
 maySpeedDown :: AppSettings -> Bool
-maySpeedDown AppSettings {_roundsPerSecond} =
-  _roundsPerSecond > 1
+maySpeedDown AppSettings {_roundsPerSecond} = _roundsPerSecond > 1
 
 rect :: a -> a -> a -> a -> SDL.Rectangle a
 rect x y w h = SDL.Rectangle (P $ V2 x y) (V2 w h)

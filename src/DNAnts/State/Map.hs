@@ -22,7 +22,7 @@ import DNAnts.State.Grid
        (Grid(Grid, _cells, _extents), defaultGrid)
 import qualified DNAnts.State.Grid as G
 import DNAnts.State.Population (Population)
-import DNAnts.Types (Extents, Region, defaultExtents, divA, rect)
+import DNAnts.Types (Extents, Region, defaultExtents, divA, rect, uncurryV2)
 import Data.List.Split (chunksOf)
 
 -- TODO only use explicit imports
@@ -68,7 +68,7 @@ generateMap config = do
 Create grid filled with cells of an initial value.
 -}
 initialGrid :: Extents -> c -> GridCells c
-initialGrid (gridWidth, gridHeight) cell =
+initialGrid (V2 gridWidth gridHeight) cell =
   replicate gridHeight $ replicate gridWidth cell
 
 type GridCells c = [[c]]
@@ -91,12 +91,11 @@ generateGridCells MapConfig { extents
                             , symmetric
                             , numTeams
                             } = do
-  let (w, h) = extents
   put $ initialGrid extents (cellOfType Plain)
-  addFoodRegions numFoodRegions (V2 w h)
-  addBarrierCells numBarriers (V2 w h)
+  addFoodRegions numFoodRegions extents
+  addBarrierCells numBarriers extents
   when symmetric makeGridSymmetric
-  addSpawnPoints $ getSpawnPoints numTeams (V2 w h)
+  addSpawnPoints $ getSpawnPoints numTeams extents
 
 getSpawnPoints :: Int -> V2 Int -> [V2 Int]
 getSpawnPoints numTeams extents =
@@ -114,8 +113,8 @@ addSpawnPoints spawnPoints =
   forM_ spawnPoints $ \(V2 x y) -> cellAtL x y .= cellOfType SpawnPoint
 
 getPopulation :: MapConfig -> Population
-getPopulation MapConfig {extents = (w, h), numTeams, teamSize} =
-  let spawnPoints = getSpawnPoints numTeams (V2 w h)
+getPopulation MapConfig {extents, numTeams, teamSize} =
+  let spawnPoints = getSpawnPoints numTeams extents
   in zipWith createTeam [0 ..] spawnPoints
   where
     createTeam teamID spawnPoint =
@@ -253,7 +252,7 @@ toSymmetricGrid
 -}
 toSymmetricGrid :: GridCells a -> GridCells a
 toSymmetricGrid grid =
-  let (w, h) = gridExtentsOf grid
+  let (V2 w h) = gridExtentsOf grid
       (upper, middle, lower) = splitHalfs grid
       middle' = maybeToList $ reflectVerticalInPlace <$> middle
       upper' =
@@ -382,7 +381,7 @@ addRegionRL center extents c' = do
              else c
       randomGrid :: GridCells Double
       randomGrid =
-        uncurry gridOfCells (gridExtentsOf grid) $ randomRs (0.0, 1.0) gen
+        uncurryV2 gridOfCells (gridExtentsOf grid) $ randomRs (0.0, 1.0) gen
       addGridIndicesAndRandoms ::
            GridCells a -> GridCells (a, (Int, Int), Double)
       addGridIndicesAndRandoms grid =
@@ -413,7 +412,7 @@ Rectangle (P (V2 0 0)) (V2 3 4)
 
 -}
 gridRegionOf :: GridCells a -> Region
-gridRegionOf rows = Rectangle (P (V2 0 0)) $ uncurry V2 $ gridExtentsOf rows
+gridRegionOf rows = Rectangle (P (V2 0 0)) $ gridExtentsOf rows
 
 {- |
 Get extents of a grid.
@@ -425,8 +424,8 @@ Get extents of a grid.
 gridExtentsOf :: GridCells a -> Extents
 gridExtentsOf rows =
   case rows of
-    r:rs -> (length r, length rows)
-    _ -> (0, length rows)
+    r:rs -> V2 (length r) (length rows)
+    _ -> V2 0 $ length rows
 
 {- |
 Show mapped value but set without mapping.

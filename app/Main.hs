@@ -10,11 +10,12 @@ import System.Console.GetOpt
        (ArgDescr(NoArg, OptArg, ReqArg), ArgOrder(RequireOrder),
         OptDescr(Option), getOpt, usageInfo)
 import System.Environment (getArgs, getProgName)
+import Linear.V2 (V2(V2))
 
 defaultAppSettings :: AppSettings
 defaultAppSettings =
   AppSettings
-  { gridExtents = (23, 23)
+  { gridExtents = V2 23 23
   , gridSpacing = 32
   , _framesPerSecond = 30
   , _roundsPerSecond = 4
@@ -32,23 +33,23 @@ options =
       "g"
       ["grid"]
       (ReqArg
-         (\arg settings -> return settings {gridExtents = (read arg, read arg)})
+         (\arg settings -> return settings {gridExtents = V2 (read arg) (read arg)})
          "size")
       "Size of the grid (equal width and height)"
   , Option
       "w"
       ["grid-w"]
       (ReqArg
-         (\arg settings@AppSettings {gridExtents = (_, height)} ->
-            return settings {gridExtents = (read arg, height)})
+         (\arg settings@AppSettings {gridExtents = (V2 _ height)} ->
+            return settings {gridExtents = V2 (read arg) height})
          "width")
       "Width of the grid"
   , Option
       "h"
       ["grid-h"]
       (ReqArg
-         (\arg settings@AppSettings {gridExtents = (width, _)} ->
-            return settings {gridExtents = (width, read arg)})
+         (\arg settings@AppSettings {gridExtents = (V2 width _)} ->
+            return settings {gridExtents = V2 width (read arg)})
          "height")
       "Height of the grid"
   , Option

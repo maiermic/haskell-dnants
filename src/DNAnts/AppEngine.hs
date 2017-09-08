@@ -34,6 +34,7 @@ import Data.Maybe (mapMaybe)
 import Data.Text (pack)
 import GHC.Word (Word32, Word8)
 import Lens.Family2.State.Lazy (zoom)
+import SDL.Vect
 import qualified SDL
 import qualified SDL.Raw
 
@@ -79,7 +80,7 @@ handleInput =
     Pause ->
       zoom state $ do
         paused %= not
-        unlessL paused $ markedCell .= (-1, -1)
+        unlessL paused $ markedCell .= V2 (-1) (-1)
         showCommands .= False
     SingleStep -> do
       state . step .= True
@@ -112,7 +113,7 @@ gameLoop = do
 
 runApp :: String -> AppSettings -> IO ()
 runApp title _settings@AppSettings {gridExtents, gridSpacing} =
-  let (gridWidth, gridHeight) = gridExtents
+  let (V2 gridWidth gridHeight) = gridExtents
       windowWidth = fromIntegral (gridWidth * gridSpacing)
       windowHeight = fromIntegral (gridHeight * gridSpacing)
   in runResourceM $ do

@@ -4,6 +4,7 @@
 
 module DNAnts.State.AntState where
 
+import SDL.Vect
 import DNAnts.Types (Direction, Position)
 
 data AntId = AntId
@@ -61,9 +62,9 @@ defaultAntState =
   AntState
   { id = 0
   , teamID = 0
-  , pos = (0, 0)
-  , dist = (0, 0)
-  , dir = (0, 0)
+  , pos = V2 0 0
+  , dist = V2 0 0
+  , dir = V2 0 0
   , lastDirChange = 0
   , strength = 0
   , damage = 0
@@ -71,7 +72,7 @@ defaultAntState =
   , nticksNotFed = 0
   , tickCount = 0
   , events = defaultStateEvents
-  , enemyDir = (0, 0)
+  , enemyDir = V2 0 0
   , action = DoMove
   , mode = Scouting
   }

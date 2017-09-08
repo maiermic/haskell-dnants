@@ -29,7 +29,7 @@ import DNAnts.State.Population (Population)
 import DNAnts.Types
        (AppSettings(AppSettings, _framesPerSecond, gridExtents,
                     gridSpacing, initTeamSize, numTeams),
-        Color, Position, divA, rect, rgb, rgba, toColor3)
+        Color, Extents, Position, divA, rect, rgb, rgba, toColor3)
 import DNAnts.Types.Orientation
        (Orientation, directionOfOrientation, noOrientation)
 import qualified DNAnts.Types.Orientation as Orientation
@@ -52,8 +52,8 @@ data AppPlayState = AppPlayState
   , _showOutTraces :: Bool
   , _lastRoundMs :: Word32
   , gridSpacing :: Int
-  , gridExtents :: (Int, Int)
-  , _markedCell :: (Int, Int)
+  , gridExtents :: Extents
+  , _markedCell :: Position
   , _gameState :: GameState
   , sprites :: Sprites
   , teamColors :: [Color]
@@ -108,7 +108,7 @@ defaultAppPlayState appSettings@AppSettings {gridExtents, gridSpacing, numTeams}
     , _lastRoundMs = 0
     , gridSpacing
     , gridExtents
-    , _markedCell = (-1, -1)
+    , _markedCell = V2 (-1) (-1)
     , _gameState
     , sprites
     , teamColors =
@@ -140,14 +140,14 @@ draw settings window@Window {renderer} state = do
 
 renderMap :: AppSettings -> Window -> AppPlayState -> IO ()
 renderMap settings window AppPlayState {_gameState, sprites} =
-  forM_ (indexedCells $ gridState _gameState) $ \(Cell CellState {cellType}, (x, y)) ->
+  forM_ (indexedCells $ gridState _gameState) $ \(Cell CellState {cellType}, pos) ->
     case cellType of
-      Barrier -> renderCell settings window (rock sprites) (x, y)
-      Food -> renderCell settings window (sugah1 sprites) (x, y)
+      Barrier -> renderCell settings window (rock sprites) pos
+      Food -> renderCell settings window (sugah1 sprites) pos
       _ -> mempty
 
 renderCell :: AppSettings -> Window -> Sprite -> Position -> IO ()
-renderCell AppSettings {gridSpacing} Window {renderer} texture (cellX, cellY) = do
+renderCell AppSettings {gridSpacing} Window {renderer} texture (V2 cellX cellY) = do
   let size = (fromIntegral gridSpacing) :: CInt
       dstRect =
         rect (fromIntegral cellX * size) (fromIntegral cellY * size) size size
