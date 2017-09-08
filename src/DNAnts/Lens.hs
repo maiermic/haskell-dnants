@@ -6,6 +6,7 @@ import Control.Lens
 import Control.Lens.Internal.Zoom (Focusing)
 import Control.Lens.Operators
 import Control.Lens.Traversal
+import Control.Monad (Monad, unless, when)
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.State.Lazy
        (StateT(StateT), execStateT, get, put)
@@ -70,3 +71,11 @@ like.
 -}
 (.=>>) :: Monad m => LensLike' (Focusing m c) t s -> (s -> m c) -> StateT t m c
 g .=>> f = viewEachM g f
+
+unlessL g f = do
+  predicate <- use g
+  unless predicate f
+
+whenL g f = do
+  predicate <- use g
+  when predicate f
