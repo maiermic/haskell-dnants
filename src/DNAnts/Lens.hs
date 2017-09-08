@@ -8,6 +8,7 @@ import Control.Lens.Internal.Zoom (Focusing)
 import Control.Lens.Operators
 import Control.Lens.Traversal
 import Control.Monad (Monad, unless, when)
+import Control.Monad.State.Class (MonadState)
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.State.Lazy
        (StateT(StateT), execStateT, get, put)
@@ -47,7 +48,7 @@ viewEachM ::
      Monad m => LensLike' (Focusing m c) t s -> (s -> m c) -> StateT t m c
 viewEachM g f = zoom g $ id .=> f
 
-infix 4 .=>, .=>>
+infix 4 .=>, .=>>, .=.
 
 {- |
 Operator alias of @viewM@ to run monadic action on state of a getter lens.
@@ -80,6 +81,9 @@ infixr 2 <~%
 
 (<~%) :: Monad m => Lens' s a -> (a -> m a) -> StateT s m ()
 l <~% f = modifyingM l f
+
+(.=.) :: MonadState s m => ASetter s s a b -> Getting b s b -> m ()
+left .=. right = use right >>= (left .=)
 
 unlessL g f = do
   predicate <- use g
