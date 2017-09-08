@@ -63,6 +63,7 @@ handleInput =
     Reset -> do
       settings' <- use settings
       state <~% resetAppPlayState settings'
+    Help -> state . showCommands %= not
     _ -> return ()
 
 without :: (Eq a, Foldable t) => [a] -> t a -> [a]

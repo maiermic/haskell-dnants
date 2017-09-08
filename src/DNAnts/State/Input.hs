@@ -10,6 +10,7 @@ import qualified SDL
 
 data Input
   = Reset
+  | Help
   | Quit
   deriving (Eq, Show)
 
@@ -17,6 +18,7 @@ toInput :: SDL.Keycode -> Maybe Input
 toInput =
   \case
     SDL.KeycodeEscape -> Just Reset
+    SDL.KeycodeH -> Just Help
     SDL.KeycodeQ -> Just Quit
     _ -> Nothing
 
