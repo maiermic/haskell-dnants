@@ -27,6 +27,7 @@ library
                      , DNAnts.State.CellState
                      , DNAnts.State.GameState
                      , DNAnts.State.Grid
+                     , DNAnts.State.Input
                      , DNAnts.State.Map
                      , DNAnts.State.Population
                      , DNAnts.SVG

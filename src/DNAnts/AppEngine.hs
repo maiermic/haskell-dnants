@@ -3,21 +3,24 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE LambdaCase #-}
 
 module DNAnts.AppEngine where
 
 import Control.Lens (makeLenses, use)
 import Control.Lens.Operators
 import Control.Lens.Traversal
-import Control.Monad (Monad, unless, when)
+import Control.Monad (Monad, mapM_, unless, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Trans.State.Lazy
        (StateT(StateT), execStateT, get, put)
 import Control.Monad.Writer.DNAnts.ResourceM
        (ResourceM, onReleaseResources, runResourceM)
+import DNAnts.Debug
 import DNAnts.Lens ((.=>), (.=>>), getsM, unlessL, whenL)
 import DNAnts.State.AppPlayState
 import DNAnts.State.GameState
+import DNAnts.State.Input
 import DNAnts.Types
        (AppSettings(AppSettings, framesPerSecond, gridExtents,
                     gridSpacing, roundsPerSecond),
@@ -25,6 +28,7 @@ import DNAnts.Types
 import DNAnts.View.Sprites (loadSprites)
 import DNAnts.View.Window
        (Window(Window, renderer, window), getRenderer, getWindow)
+import Data.Maybe (mapMaybe)
 import Data.Text (pack)
 import GHC.Word (Word32, Word8)
 import Lens.Family2.State.Lazy (zoom)
@@ -42,6 +46,25 @@ data AppEngine = AppEngine
 
 makeLenses ''AppEngine
 
+handleEvents :: StateT AppEngine IO ()
+handleEvents = do
+  events <- liftIO $ map SDL.eventPayload <$> SDL.pollEvents
+  when (SDL.QuitEvent `elem` events) $ isRunning .= False
+  handleKeyboardEvents events
+
+handleKeyboardEvents :: [SDL.EventPayload] -> StateT AppEngine IO ()
+handleKeyboardEvents events =
+  mapM_ handleInput $ mapMaybe toInput $ mapMaybe toPressedKey events
+
+handleInput :: Input -> StateT AppEngine IO ()
+handleInput =
+  \case
+    Quit -> isRunning .= False
+    _ -> return ()
+
+without :: (Eq a, Foldable t) => [a] -> t a -> [a]
+without values excludes = filter (`notElem` excludes) values
+
 update :: StateT AppEngine IO ()
 update = do
   AppEngine {_settings, _state = AppPlayState {_lastRoundMs}} <- get
@@ -57,9 +80,8 @@ update = do
 
 gameLoop :: StateT AppEngine IO ()
 gameLoop = do
-  events <- liftIO $ map SDL.eventPayload <$> SDL.pollEvents
-  let quit = SDL.QuitEvent `elem` events
-  unless quit $ do
+  handleEvents
+  whenL isRunning $ do
     update
     getsM drawFrame
     gameLoop
