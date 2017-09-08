@@ -72,6 +72,7 @@ handleInput =
       whenL (settings . to maySpeedUp) $ settings . roundsPerSecond += 1
     SpeedDown ->
       whenL (settings . to maySpeedDown) $ settings . roundsPerSecond -= 1
+    MinSpeed -> settings . roundsPerSecond .= 1
     _ -> return ()
 
 without :: (Eq a, Foldable t) => [a] -> t a -> [a]

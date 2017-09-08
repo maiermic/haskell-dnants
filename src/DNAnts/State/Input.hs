@@ -18,6 +18,7 @@ data Input
   | ToggleOutTraces
   | SpeedUp
   | SpeedDown
+  | MinSpeed
   deriving (Eq, Show)
 
 toInput :: SDL.Keycode -> Maybe Input
@@ -32,6 +33,7 @@ toInput =
     SDL.KeycodeO -> Just ToggleOutTraces
     SDL.KeycodeRight -> Just SpeedUp
     SDL.KeycodeLeft -> Just SpeedDown
+    SDL.KeycodeDown -> Just MinSpeed
     _ -> Nothing
 
 isPressedKey :: SDL.KeyboardEventData -> Bool
