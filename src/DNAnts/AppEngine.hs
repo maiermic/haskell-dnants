@@ -7,7 +7,7 @@
 
 module DNAnts.AppEngine where
 
-import Control.Lens (makeLenses, use)
+import Control.Lens (makeLenses, to, use)
 import Control.Lens.Operators
 import Control.Lens.Traversal
 import Control.Monad (Monad, mapM_, unless, when)
@@ -23,8 +23,8 @@ import DNAnts.State.GameState
 import DNAnts.State.Input
 import DNAnts.Types
        (AppSettings(AppSettings, framesPerSecond, gridExtents,
-                    gridSpacing, roundsPerSecond),
-        rgb, showGrid, showTraces)
+                    gridSpacing, _roundsPerSecond),
+        rgb, showGrid, showTraces, maySpeedUp, roundsPerSecond)
 import DNAnts.View.Sprites (loadSprites)
 import DNAnts.View.Window
        (Window(Window, renderer, window), getRenderer, getWindow)
@@ -68,6 +68,8 @@ handleInput =
     ToggleTraces -> settings . showTraces %= not
     ToggleInTraces -> state . showInTraces %= not
     ToggleOutTraces -> state . showOutTraces %= not
+    SpeedUp ->
+      whenL (settings . to maySpeedUp) $ settings . roundsPerSecond += 1
     _ -> return ()
 
 without :: (Eq a, Foldable t) => [a] -> t a -> [a]
@@ -76,7 +78,7 @@ without values excludes = filter (`notElem` excludes) values
 update :: StateT AppEngine IO ()
 update = do
   AppEngine {_settings, _state = AppPlayState {_lastRoundMs}} <- get
-  let msPerRound = 1000 `div` fromIntegral (roundsPerSecond _settings)
+  let msPerRound = 1000 `div` fromIntegral (_roundsPerSecond _settings)
   ms <- SDL.Raw.getTicks
   when (ms - _lastRoundMs >= msPerRound) $ do
     zoom state $ do

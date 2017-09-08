@@ -1,3 +1,4 @@
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TemplateHaskell #-}
 
 module DNAnts.Types where
@@ -39,7 +40,7 @@ data AppSettings = AppSettings
   { gridExtents :: Extents
   , gridSpacing :: Int
   , framesPerSecond :: Int
-  , roundsPerSecond :: Int
+  , _roundsPerSecond :: Int
   , traceRounds :: Int
   , initTeamSize :: Int
   , numTeams :: Int
@@ -49,6 +50,10 @@ data AppSettings = AppSettings
   } deriving (Show)
 
 makeLenses ''AppSettings
+
+maySpeedUp :: AppSettings -> Bool
+maySpeedUp AppSettings {_roundsPerSecond, framesPerSecond} =
+  _roundsPerSecond < framesPerSecond
 
 rect :: a -> a -> a -> a -> SDL.Rectangle a
 rect x y w h = SDL.Rectangle (P $ V2 x y) (V2 w h)
