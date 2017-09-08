@@ -49,7 +49,7 @@ data AppPlayState = AppPlayState
   , _step :: Bool
   , _showCommands :: Bool
   , _showInTraces :: Bool
-  , showOutTraces :: Bool
+  , _showOutTraces :: Bool
   , _lastRoundMs :: Word32
   , gridSpacing :: Int
   , gridExtents :: (Int, Int)
@@ -104,7 +104,7 @@ defaultAppPlayState appSettings@AppSettings {gridExtents, gridSpacing, numTeams}
     , _step = False
     , _showCommands = True
     , _showInTraces = True
-    , showOutTraces = True
+    , _showOutTraces = True
     , _lastRoundMs = 0
     , gridSpacing
     , gridExtents

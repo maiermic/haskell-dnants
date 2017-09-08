@@ -67,6 +67,7 @@ handleInput =
     ToggleGrid -> settings . showGrid %= not
     ToggleTraces -> settings . showTraces %= not
     ToggleInTraces -> state . showInTraces %= not
+    ToggleOutTraces -> state . showOutTraces %= not
     _ -> return ()
 
 without :: (Eq a, Foldable t) => [a] -> t a -> [a]
