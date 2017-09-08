@@ -20,6 +20,7 @@ data Input
   | SpeedDown
   | MinSpeed
   | MaxSpeed
+  | Pause
   deriving (Eq, Show)
 
 toInput :: SDL.Keycode -> Maybe Input
@@ -36,6 +37,7 @@ toInput =
     SDL.KeycodeLeft -> Just SpeedDown
     SDL.KeycodeDown -> Just MinSpeed
     SDL.KeycodeUp -> Just MaxSpeed
+    SDL.KeycodeSpace -> Just Pause
     _ -> Nothing
 
 isPressedKey :: SDL.KeyboardEventData -> Bool

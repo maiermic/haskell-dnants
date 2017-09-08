@@ -7,7 +7,7 @@
 
 module DNAnts.AppEngine where
 
-import Control.Lens (makeLenses, to, use)
+import Control.Lens (makeLenses, to, use, (%=))
 import Control.Lens.Operators
 import Control.Lens.Traversal
 import Control.Monad (Monad, mapM_, unless, when)
@@ -76,6 +76,11 @@ handleInput =
       whenL (settings . to maySpeedDown) $ settings . roundsPerSecond -= 1
     MinSpeed -> settings . roundsPerSecond .= 1
     MaxSpeed -> settings . roundsPerSecond .=. settings . framesPerSecond
+    Pause ->
+      zoom state $ do
+        paused %= not
+        unlessL paused $ markedCell .= (-1, -1)
+        showCommands .= False
     _ -> return ()
 
 without :: (Eq a, Foldable t) => [a] -> t a -> [a]

@@ -53,7 +53,7 @@ data AppPlayState = AppPlayState
   , _lastRoundMs :: Word32
   , gridSpacing :: Int
   , gridExtents :: (Int, Int)
-  , markedCell :: (Int, Int)
+  , _markedCell :: (Int, Int)
   , _gameState :: GameState
   , sprites :: Sprites
   , teamColors :: [Color]
@@ -108,7 +108,7 @@ defaultAppPlayState appSettings@AppSettings {gridExtents, gridSpacing, numTeams}
     , _lastRoundMs = 0
     , gridSpacing
     , gridExtents
-    , markedCell = (-1, -1)
+    , _markedCell = (-1, -1)
     , _gameState
     , sprites
     , teamColors =
