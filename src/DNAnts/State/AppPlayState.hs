@@ -48,7 +48,7 @@ data AppPlayState = AppPlayState
   , _paused :: Bool
   , _step :: Bool
   , _showCommands :: Bool
-  , showInTraces :: Bool
+  , _showInTraces :: Bool
   , showOutTraces :: Bool
   , _lastRoundMs :: Word32
   , gridSpacing :: Int
@@ -103,7 +103,7 @@ defaultAppPlayState appSettings@AppSettings {gridExtents, gridSpacing, numTeams}
     , _paused = False
     , _step = False
     , _showCommands = True
-    , showInTraces = True
+    , _showInTraces = True
     , showOutTraces = True
     , _lastRoundMs = 0
     , gridSpacing
