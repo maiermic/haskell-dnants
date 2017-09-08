@@ -55,6 +55,10 @@ maySpeedUp :: AppSettings -> Bool
 maySpeedUp AppSettings {_roundsPerSecond, framesPerSecond} =
   _roundsPerSecond < framesPerSecond
 
+maySpeedDown :: AppSettings -> Bool
+maySpeedDown AppSettings {_roundsPerSecond} =
+  _roundsPerSecond > 1
+
 rect :: a -> a -> a -> a -> SDL.Rectangle a
 rect x y w h = SDL.Rectangle (P $ V2 x y) (V2 w h)
 

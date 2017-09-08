@@ -24,7 +24,7 @@ import DNAnts.State.Input
 import DNAnts.Types
        (AppSettings(AppSettings, framesPerSecond, gridExtents,
                     gridSpacing, _roundsPerSecond),
-        rgb, showGrid, showTraces, maySpeedUp, roundsPerSecond)
+        rgb, showGrid, showTraces, maySpeedUp, roundsPerSecond, maySpeedDown)
 import DNAnts.View.Sprites (loadSprites)
 import DNAnts.View.Window
        (Window(Window, renderer, window), getRenderer, getWindow)
@@ -70,6 +70,8 @@ handleInput =
     ToggleOutTraces -> state . showOutTraces %= not
     SpeedUp ->
       whenL (settings . to maySpeedUp) $ settings . roundsPerSecond += 1
+    SpeedDown ->
+      whenL (settings . to maySpeedDown) $ settings . roundsPerSecond -= 1
     _ -> return ()
 
 without :: (Eq a, Foldable t) => [a] -> t a -> [a]
