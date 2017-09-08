@@ -12,6 +12,7 @@ data Input
   = Reset
   | Help
   | Quit
+  | ToggleGrid
   deriving (Eq, Show)
 
 toInput :: SDL.Keycode -> Maybe Input
@@ -20,6 +21,7 @@ toInput =
     SDL.KeycodeEscape -> Just Reset
     SDL.KeycodeH -> Just Help
     SDL.KeycodeQ -> Just Quit
+    SDL.KeycodeG -> Just ToggleGrid
     _ -> Nothing
 
 isPressedKey :: SDL.KeyboardEventData -> Bool

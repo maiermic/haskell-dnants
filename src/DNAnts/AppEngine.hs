@@ -24,7 +24,7 @@ import DNAnts.State.Input
 import DNAnts.Types
        (AppSettings(AppSettings, framesPerSecond, gridExtents,
                     gridSpacing, roundsPerSecond),
-        rgb)
+        rgb, showGrid)
 import DNAnts.View.Sprites (loadSprites)
 import DNAnts.View.Window
        (Window(Window, renderer, window), getRenderer, getWindow)
@@ -64,6 +64,7 @@ handleInput =
       settings' <- use settings
       state <~% resetAppPlayState settings'
     Help -> state . showCommands %= not
+    ToggleGrid -> settings . showGrid %= not
     _ -> return ()
 
 without :: (Eq a, Foldable t) => [a] -> t a -> [a]

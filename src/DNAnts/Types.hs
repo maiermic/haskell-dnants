@@ -1,6 +1,9 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 module DNAnts.Types where
 
 import Control.Applicative (liftA2)
+import Control.Lens (makeLenses)
 import Foreign.C.Types (CInt)
 import GHC.Word (Word8)
 import qualified SDL
@@ -40,10 +43,12 @@ data AppSettings = AppSettings
   , traceRounds :: Int
   , initTeamSize :: Int
   , numTeams :: Int
-  , showGrid :: Bool
+  , _showGrid :: Bool
   , showTraces :: Bool
   , teamCodes :: [String]
   } deriving (Show)
+
+makeLenses ''AppSettings
 
 rect :: a -> a -> a -> a -> SDL.Rectangle a
 rect x y w h = SDL.Rectangle (P $ V2 x y) (V2 w h)
