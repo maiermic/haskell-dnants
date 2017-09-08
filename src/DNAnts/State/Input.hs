@@ -9,12 +9,14 @@ module DNAnts.State.Input where
 import qualified SDL
 
 data Input
-  = Quit
+  = Reset
+  | Quit
   deriving (Eq, Show)
 
 toInput :: SDL.Keycode -> Maybe Input
 toInput =
   \case
+    SDL.KeycodeEscape -> Just Reset
     SDL.KeycodeQ -> Just Quit
     _ -> Nothing
 

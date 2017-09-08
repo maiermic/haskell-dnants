@@ -60,6 +60,12 @@ handleInput :: Input -> StateT AppEngine IO ()
 handleInput =
   \case
     Quit -> isRunning .= False
+    Reset -> do
+      -- TODO extract to operator  state <~% resetAppPlayState settings'
+      settings' <- use settings
+      state' <- use state
+      state'' <- liftIO $ resetAppPlayState settings' state'
+      state .= state''
     _ -> return ()
 
 without :: (Eq a, Foldable t) => [a] -> t a -> [a]

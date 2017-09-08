@@ -125,6 +125,10 @@ defaultAppPlayState appSettings@AppSettings {gridExtents, gridSpacing, numTeams}
     , grassColor = rgba 0xaa 0xde 0x87 0xff
     }
 
+resetAppPlayState :: AppSettings -> AppPlayState -> IO AppPlayState
+resetAppPlayState settings AppPlayState {sprites} =
+  defaultAppPlayState settings sprites
+
 draw :: AppSettings -> Window -> AppPlayState -> IO ()
 draw settings window@Window {renderer} state = do
   SDL.rendererDrawColor renderer $= rgba 0xc3 0xc3 0xc3 0x00
