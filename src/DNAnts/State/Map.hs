@@ -121,11 +121,11 @@ getPopulation MapConfig {extents = (w, h), numTeams, teamSize} =
     createTeam teamID spawnPoint =
       AntTeam
       { teamID
-      , teamSize
+      , _teamSize = teamSize
       , client = error "no client defined"
       , _ants = []
       , _spawnPoints = [spawnPoint]
-      , numFood = 0
+      , _numFood = 0
       }
 
 addFoodRegions :: MonadIO m => Int -> V2 Int -> StateT (GridCells Cell) m ()

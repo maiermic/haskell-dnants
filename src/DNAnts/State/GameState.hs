@@ -1,13 +1,20 @@
+{-# LANGUAGE DisambiguateRecordFields #-}
+{-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TemplateHaskell #-}
 
 module DNAnts.State.GameState where
 
-import DNAnts.Debug (debugShow)
+import Control.Lens
+       ((%=), (+=), (-=), (^?), ix, makeLenses, to, use)
+import Control.Monad (forM_, when)
 import Control.Monad.IO.Class (liftIO)
-import Control.Lens ((+=), makeLenses, use, to, (%=), ix)
-import DNAnts.Lens (whenL, (.=>>), (.=>))
 import Control.Monad.Trans.State.Lazy (StateT, get)
+import DNAnts.Debug (debugShow)
+import DNAnts.Lens ((.=>), (.=>>), (.>=), (.>=.), unlessL, whenL)
+import DNAnts.State.Ant as AT
 import DNAnts.State.Ant
+import DNAnts.State.Cell (isCellTaken)
 import DNAnts.State.Grid
 import DNAnts.State.Map
 import DNAnts.State.Population (Population)
@@ -51,14 +58,19 @@ isSpawnRound rc = rc `mod` 20 == 1
 spawnAnts :: StateT GameState IO ()
 spawnAnts = do
   liftIO $ putStrLn "spawn ants"
+  grid <- use gridFront
   zoom (populFront . traverse) $ do
-    (V2 x y):_ <- use spawnPoints
---      baseCell <- use $ gridFront . cellAtL x y
---      whenL (gridFront . cellAtL x y . to isTaken) $
-        -- TODO if (_ants.size() >= _team_size) { return; }
---        addAntAt x y
-    addAntAt x y
-
+    sps <- use spawnPoints
+    forM_ sps $ \(V2 x y) -> do
+      numFood .=> debugShow "numFood"
+      AT.teamSize .=> debugShow "AT.teamSize"
+      unlessL (ants . to length .>=. AT.teamSize) $ do
+        whenL (numFood .>= 8) $ do
+          AT.teamSize += 1
+          numFood -= 8
+        let (Just baseCell) = grid ^? cells . cellAtL x y
+        when (isCellTaken baseCell) $ addAntAt x y
+        addAntAt x y
 
 addAntAt :: Int -> Int -> StateT AntTeam IO ()
 addAntAt x y = do

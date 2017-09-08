@@ -19,11 +19,11 @@ data Ant = Ant
 
 data AntTeam = AntTeam
   { teamID :: Int
-  , teamSize :: Int
+  , _teamSize :: Int
   , client :: Client
   , _ants :: [Ant]
   , _spawnPoints :: [V2 Int]
-  , numFood :: Int
+  , _numFood :: Int
   }
 
 makeLenses ''AntTeam

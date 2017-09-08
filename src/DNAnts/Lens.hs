@@ -48,7 +48,7 @@ viewEachM ::
      Monad m => LensLike' (Focusing m c) t s -> (s -> m c) -> StateT t m c
 viewEachM g f = zoom g $ id .=> f
 
-infix 4 .=>, .=>>, .=.
+infix 4 .=>, .=>>, .=., .>=., .>=
 
 {- |
 Operator alias of @viewM@ to run monadic action on state of a getter lens.
@@ -85,10 +85,26 @@ l <~% f = modifyingM l f
 (.=.) :: MonadState s m => ASetter s s a b -> Getting b s b -> m ()
 left .=. right = use right >>= (left .=)
 
+(.>=.) ::
+     (Ord a, Contravariant f, Profunctor p)
+  => Getting a s a
+  -> Getting a s a
+  -> Optic' p f s Bool
+left .>=. right = to $ (>=) <$> view left <*> view right
+
+(.>=) ::
+     (Ord a, Contravariant f, Profunctor p)
+  => Optic' p f s a
+  -> a
+  -> Optic' p f s Bool
+left .>= right = left . to (>= right)
+
+unlessL :: MonadState s m => Getting Bool s Bool -> m () -> m ()
 unlessL g f = do
   predicate <- use g
   unless predicate f
 
+whenL :: MonadState s m => Getting Bool s Bool -> m () -> m ()
 whenL g f = do
   predicate <- use g
   when predicate f

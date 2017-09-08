@@ -7,7 +7,7 @@
 module DNAnts.State.AppPlayState where
 
 import Control.Lens
-import DNAnts.State.Ant
+import DNAnts.State.Ant hiding (teamSize)
 import DNAnts.State.AntState
 import DNAnts.State.Cell (Cell(Cell), defaultCell)
 import DNAnts.State.CellState

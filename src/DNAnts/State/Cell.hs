@@ -1,8 +1,10 @@
+{-# LANGUAGE NamedFieldPuns #-}
+
 module DNAnts.State.Cell where
 
 import Control.Monad.Trans.State.Lazy (StateT)
 import DNAnts.State.CellState
-       (CellState(CellState), defaultCellState)
+       (CellState(CellState, taken), defaultCellState)
 import Lens.Family2.State.Lazy (zoom)
 
 data Cell =
@@ -12,3 +14,6 @@ defaultCell = Cell defaultCellState
 
 updateCell :: StateT Cell IO ()
 updateCell = return () -- TODO lower intensity of traces
+
+isCellTaken :: Cell -> Bool
+isCellTaken (Cell CellState {taken}) = taken
