@@ -13,6 +13,7 @@ data Input
   | Help
   | Quit
   | ToggleGrid
+  | ToggleTraces
   deriving (Eq, Show)
 
 toInput :: SDL.Keycode -> Maybe Input
@@ -22,6 +23,7 @@ toInput =
     SDL.KeycodeH -> Just Help
     SDL.KeycodeQ -> Just Quit
     SDL.KeycodeG -> Just ToggleGrid
+    SDL.KeycodeT -> Just ToggleTraces
     _ -> Nothing
 
 isPressedKey :: SDL.KeyboardEventData -> Bool

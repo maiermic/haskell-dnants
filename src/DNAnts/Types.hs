@@ -44,7 +44,7 @@ data AppSettings = AppSettings
   , initTeamSize :: Int
   , numTeams :: Int
   , _showGrid :: Bool
-  , showTraces :: Bool
+  , _showTraces :: Bool
   , teamCodes :: [String]
   } deriving (Show)
 

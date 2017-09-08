@@ -5,7 +5,7 @@ import DNAnts.AppEngine (runApp)
 import DNAnts.Types
        (AppSettings(AppSettings, framesPerSecond, gridExtents,
                     gridSpacing, initTeamSize, numTeams, roundsPerSecond, _showGrid,
-                    showTraces, teamCodes, traceRounds))
+                    _showTraces, teamCodes, traceRounds))
 import System.Console.GetOpt
        (ArgDescr(NoArg, OptArg, ReqArg), ArgOrder(RequireOrder),
         OptDescr(Option), getOpt, usageInfo)
@@ -22,7 +22,7 @@ defaultAppSettings =
   , initTeamSize = 5
   , numTeams = 0
   , _showGrid = False
-  , showTraces = False
+  , _showTraces = False
   , teamCodes = []
   }
 
