@@ -81,6 +81,9 @@ handleInput =
         paused %= not
         unlessL paused $ markedCell .= (-1, -1)
         showCommands .= False
+    SingleStep -> do
+      state . step .= True
+      state . paused .= False
     _ -> return ()
 
 without :: (Eq a, Foldable t) => [a] -> t a -> [a]
