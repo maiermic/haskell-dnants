@@ -39,7 +39,7 @@ toColor3 (V4 r g b a) = V3 r g b
 data AppSettings = AppSettings
   { gridExtents :: Extents
   , gridSpacing :: Int
-  , framesPerSecond :: Int
+  , _framesPerSecond :: Int
   , _roundsPerSecond :: Int
   , traceRounds :: Int
   , initTeamSize :: Int
@@ -52,8 +52,8 @@ data AppSettings = AppSettings
 makeLenses ''AppSettings
 
 maySpeedUp :: AppSettings -> Bool
-maySpeedUp AppSettings {_roundsPerSecond, framesPerSecond} =
-  _roundsPerSecond < framesPerSecond
+maySpeedUp AppSettings {_roundsPerSecond, _framesPerSecond} =
+  _roundsPerSecond < _framesPerSecond
 
 maySpeedDown :: AppSettings -> Bool
 maySpeedDown AppSettings {_roundsPerSecond} =

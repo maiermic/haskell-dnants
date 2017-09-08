@@ -17,14 +17,16 @@ import Control.Monad.Trans.State.Lazy
 import Control.Monad.Writer.DNAnts.ResourceM
        (ResourceM, onReleaseResources, runResourceM)
 import DNAnts.Debug
-import DNAnts.Lens ((.=>), (.=>>), (<~%), getsM, unlessL, whenL)
+import DNAnts.Lens
+       ((.=.), (.=>), (.=>>), (<~%), getsM, unlessL, whenL)
 import DNAnts.State.AppPlayState
 import DNAnts.State.GameState
 import DNAnts.State.Input
 import DNAnts.Types
-       (AppSettings(AppSettings, framesPerSecond, gridExtents,
-                    gridSpacing, _roundsPerSecond),
-        rgb, showGrid, showTraces, maySpeedUp, roundsPerSecond, maySpeedDown)
+       (AppSettings(AppSettings, _framesPerSecond, _roundsPerSecond,
+                    gridExtents, gridSpacing),
+        framesPerSecond, maySpeedDown, maySpeedUp, rgb, roundsPerSecond,
+        showGrid, showTraces)
 import DNAnts.View.Sprites (loadSprites)
 import DNAnts.View.Window
        (Window(Window, renderer, window), getRenderer, getWindow)
@@ -73,6 +75,7 @@ handleInput =
     SpeedDown ->
       whenL (settings . to maySpeedDown) $ settings . roundsPerSecond -= 1
     MinSpeed -> settings . roundsPerSecond .= 1
+    MaxSpeed -> settings . roundsPerSecond .=. settings . framesPerSecond
     _ -> return ()
 
 without :: (Eq a, Foldable t) => [a] -> t a -> [a]
@@ -127,6 +130,7 @@ drawFrame AppEngine {_settings, _window, _state} = do
   frameTime <- SDL.Raw.getTicks
   draw _settings _window _state
   frameTimeAfter <- SDL.Raw.getTicks
-  let minFrameTime = fromIntegral (1000 `div` framesPerSecond _settings)
-  when (frameTimeAfter - frameTime < minFrameTime) $
-    liftIO $ SDL.delay $ minFrameTime - (frameTimeAfter - frameTime)
+  let minFrameTime = fromIntegral (1000 `div` _framesPerSecond _settings)
+  when (frameTimeAfter - frameTime < minFrameTime) $ liftIO $ SDL.delay $
+    minFrameTime -
+    (frameTimeAfter - frameTime)

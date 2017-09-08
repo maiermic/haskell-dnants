@@ -27,7 +27,7 @@ import DNAnts.State.Map
         defaultMapConfig, generateMap)
 import DNAnts.State.Population (Population)
 import DNAnts.Types
-       (AppSettings(AppSettings, framesPerSecond, gridExtents,
+       (AppSettings(AppSettings, _framesPerSecond, gridExtents,
                     gridSpacing, initTeamSize, numTeams),
         Color, Position, divA, rect, rgb, rgba, toColor3)
 import DNAnts.Types.Orientation

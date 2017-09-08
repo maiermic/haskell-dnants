@@ -3,7 +3,7 @@ module Main where
 import Control.Monad (when)
 import DNAnts.AppEngine (runApp)
 import DNAnts.Types
-       (AppSettings(AppSettings, framesPerSecond, gridExtents,
+       (AppSettings(AppSettings, _framesPerSecond, gridExtents,
                     gridSpacing, initTeamSize, numTeams, _roundsPerSecond, _showGrid,
                     _showTraces, teamCodes, traceRounds))
 import System.Console.GetOpt
@@ -16,7 +16,7 @@ defaultAppSettings =
   AppSettings
   { gridExtents = (23, 23)
   , gridSpacing = 32
-  , framesPerSecond = 30
+  , _framesPerSecond = 30
   , _roundsPerSecond = 4
   , traceRounds = 300
   , initTeamSize = 5
