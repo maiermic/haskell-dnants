@@ -17,7 +17,7 @@ import Control.Monad.Trans.State.Lazy
 import Control.Monad.Writer.DNAnts.ResourceM
        (ResourceM, onReleaseResources, runResourceM)
 import DNAnts.Debug
-import DNAnts.Lens ((.=>), (.=>>), getsM, unlessL, whenL)
+import DNAnts.Lens ((.=>), (.=>>), (<~%), getsM, unlessL, whenL)
 import DNAnts.State.AppPlayState
 import DNAnts.State.GameState
 import DNAnts.State.Input
@@ -61,11 +61,8 @@ handleInput =
   \case
     Quit -> isRunning .= False
     Reset -> do
-      -- TODO extract to operator  state <~% resetAppPlayState settings'
       settings' <- use settings
-      state' <- use state
-      state'' <- liftIO $ resetAppPlayState settings' state'
-      state .= state''
+      state <~% resetAppPlayState settings'
     _ -> return ()
 
 without :: (Eq a, Foldable t) => [a] -> t a -> [a]

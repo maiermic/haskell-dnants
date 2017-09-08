@@ -1,4 +1,5 @@
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE RankNTypes #-}
 
 module DNAnts.Lens where
 
@@ -71,6 +72,14 @@ like.
 -}
 (.=>>) :: Monad m => LensLike' (Focusing m c) t s -> (s -> m c) -> StateT t m c
 g .=>> f = viewEachM g f
+
+modifyingM :: Monad m => Lens' s a -> (a -> m a) -> StateT s m ()
+modifyingM l f = use l >>= lift . f >>= assign l
+
+infixr 2 <~%
+
+(<~%) :: Monad m => Lens' s a -> (a -> m a) -> StateT s m ()
+l <~% f = modifyingM l f
 
 unlessL g f = do
   predicate <- use g
