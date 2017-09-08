@@ -4,7 +4,7 @@ import Control.Applicative (liftA2)
 import Foreign.C.Types (CInt)
 import GHC.Word (Word8)
 import qualified SDL
-import SDL.Vect (Point(P), V2(V2), V4(V4))
+import SDL.Vect (Point(P), V2(V2), V3(V3), V4(V4))
 
 type Point = (Int, Int)
 
@@ -26,6 +26,11 @@ rgb r g b = V4 r g b maxBound
 
 rgba :: Word8 -> Word8 -> Word8 -> Word8 -> Color
 rgba = V4
+
+type Color3 = V3 Word8
+
+toColor3 :: Color -> Color3
+toColor3 (V4 r g b a) = V3 r g b
 
 data AppSettings = AppSettings
   { gridExtents :: Extents
