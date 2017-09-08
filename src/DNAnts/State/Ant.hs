@@ -14,7 +14,7 @@ import SDL.Vect (V2)
 
 data Ant = Ant
   { team :: AntTeam
-  , state :: AntState
+  , _state :: AntState
   }
 
 data AntTeam = AntTeam
@@ -26,8 +26,9 @@ data AntTeam = AntTeam
   , _numFood :: Int
   }
 
+makeLenses ''Ant
 makeLenses ''AntTeam
 
 createAnt :: AntTeam -> Int -> Position -> Ant
 createAnt team@AntTeam {teamID} id pos =
-  Ant {team, state = defaultAntState {AS.id = id, teamID, pos, strength = 5}}
+  Ant {team, _state = defaultAntState {AS.id = id, teamID, pos, strength = 5}}

@@ -45,7 +45,6 @@ data AntState = AntState
   , pos :: Position
   , dist :: Position
   , dir :: Direction
-  , rand :: Int
   , lastDirChange :: Int
   , strength :: Int
   , damage :: Int
@@ -65,7 +64,6 @@ defaultAntState =
   , pos = (0, 0)
   , dist = (0, 0)
   , dir = (0, 0)
-  , rand = 0
   , lastDirChange = 0
   , strength = 0
   , damage = 0
@@ -76,4 +74,12 @@ defaultAntState =
   , enemyDir = (0, 0)
   , action = DoMove
   , mode = Scouting
+  }
+
+updateInitAntState :: Int -> AntState -> AntState
+updateInitAntState tickCount state@AntState {events} =
+  state
+  { tickCount
+  , damage = 0
+  , events = events {enemy = False, food = False, attacked = False}
   }

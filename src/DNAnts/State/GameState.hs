@@ -14,6 +14,7 @@ import DNAnts.Debug (debugShow)
 import DNAnts.Lens ((.=>), (.=>>), (.>=), (.>=.), unlessL, whenL)
 import DNAnts.State.Ant as AT
 import DNAnts.State.Ant
+import DNAnts.State.AntState
 import DNAnts.State.Cell (isCellTaken)
 import DNAnts.State.Grid
 import DNAnts.State.Map
@@ -48,6 +49,10 @@ nextGameState = do
 updatePopulation :: StateT GameState IO ()
 updatePopulation = do
   updateAntTeams
+  tickCount <- use roundCount
+  traverseAnts . state %= updateInitAntState tickCount
+
+traverseAnts = populFront . traverse . ants . traverse
 
 updateAntTeams :: StateT GameState IO ()
 updateAntTeams = whenL (roundCount . to isSpawnRound) spawnAnts

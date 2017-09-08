@@ -219,8 +219,8 @@ toLineSegment :: [Point V2 CInt] -> [LineSegment]
 toLineSegment points = zip points $ tail points
 
 renderAnt ::  AppSettings -> Window -> Sprites -> Color -> Ant -> IO ()
-renderAnt settings window sprites color Ant {state} = do
+renderAnt settings window sprites color Ant {_state} = do
   -- TODO check if ant is alive
   let texture = ant1 sprites
   SDL.textureColorMod texture $= toColor3 color
-  renderCell settings window texture (pos state)
+  renderCell settings window texture (pos _state)
