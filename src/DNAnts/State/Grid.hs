@@ -3,9 +3,11 @@
 module DNAnts.State.Grid where
 
 import Control.Lens (makeLenses)
-import DNAnts.State.Cell (Cell)
+import Control.Monad.Trans.State.Lazy (StateT)
+import DNAnts.State.Cell (Cell, updateCell)
 import DNAnts.State.CellState (CellState)
 import DNAnts.Types (Extents, Position, defaultExtents)
+import Lens.Family2.State.Lazy (zoom)
 
 data Grid = Grid
   { _extents :: Extents
@@ -41,3 +43,6 @@ data NeighborGrid = NeighborGrid
   , tick :: Int
   , nilCell :: CellState
   }
+
+updateGrid :: StateT Grid IO ()
+updateGrid = zoom (cells . traverse . traverse) updateCell

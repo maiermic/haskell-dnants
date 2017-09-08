@@ -123,8 +123,8 @@ getPopulation MapConfig {extents = (w, h), numTeams, teamSize} =
       { teamID
       , teamSize
       , client = error "no client defined"
-      , ants = []
-      , spawnPoints = [spawnPoint]
+      , _ants = []
+      , _spawnPoints = [spawnPoint]
       , numFood = 0
       }
 

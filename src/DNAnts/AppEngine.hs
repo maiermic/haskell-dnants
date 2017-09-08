@@ -6,7 +6,7 @@
 
 module DNAnts.AppEngine where
 
-import Control.Lens
+import Control.Lens (makeLenses, use)
 import Control.Lens.Operators
 import Control.Lens.Traversal
 import Control.Monad (Monad, unless, when)
@@ -15,18 +15,19 @@ import Control.Monad.Trans.State.Lazy
        (StateT(StateT), execStateT, get, put)
 import Control.Monad.Writer.DNAnts.ResourceM
        (ResourceM, onReleaseResources, runResourceM)
-import DNAnts.Lens ((.=>), (.=>>), getsM)
+import DNAnts.Lens ((.=>), (.=>>), getsM, unlessL, whenL)
 import DNAnts.State.AppPlayState
-       (AppPlayState, defaultAppPlayState, draw)
+import DNAnts.State.GameState
 import DNAnts.Types
        (AppSettings(AppSettings, framesPerSecond, gridExtents,
-                    gridSpacing),
+                    gridSpacing, roundsPerSecond),
         rgb)
 import DNAnts.View.Sprites (loadSprites)
 import DNAnts.View.Window
        (Window(Window, renderer, window), getRenderer, getWindow)
 import Data.Text (pack)
 import GHC.Word (Word32, Word8)
+import Lens.Family2.State.Lazy (zoom)
 import qualified SDL
 import qualified SDL.Raw
 
@@ -41,11 +42,25 @@ data AppEngine = AppEngine
 
 makeLenses ''AppEngine
 
+update :: StateT AppEngine IO ()
+update = do
+  AppEngine {_settings, _state = AppPlayState {_lastRoundMs}} <- get
+  let msPerRound = 1000 `div` fromIntegral (roundsPerSecond _settings)
+  ms <- SDL.Raw.getTicks
+  when (ms - _lastRoundMs >= msPerRound) $ do
+    zoom state $ do
+      lastRoundMs .= ms
+      unlessL paused $ zoom gameState nextGameState
+      whenL step $ do
+        paused .= True
+        step .= False
+
 gameLoop :: StateT AppEngine IO ()
 gameLoop = do
   events <- liftIO $ map SDL.eventPayload <$> SDL.pollEvents
   let quit = SDL.QuitEvent `elem` events
   unless quit $ do
+    update
     getsM drawFrame
     gameLoop
 
@@ -74,7 +89,7 @@ runApp title _settings@AppSettings {gridExtents, gridSpacing} =
 
 drawFrame :: AppEngine -> IO ()
 drawFrame AppEngine {_settings, _window, _state} = do
-  frameTime <- liftIO SDL.Raw.getTicks
+  frameTime <- SDL.Raw.getTicks
   draw _settings _window _state
   frameTimeAfter <- SDL.Raw.getTicks
   let minFrameTime = fromIntegral (1000 `div` framesPerSecond _settings)

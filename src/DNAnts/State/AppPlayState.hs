@@ -2,11 +2,13 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module DNAnts.State.AppPlayState where
 
+import Control.Lens
 import DNAnts.State.Ant
-       (Ant(Ant), AntTeam(AntTeam, ants, spawnPoints))
+import DNAnts.State.AntState
 import DNAnts.State.Cell (Cell(Cell), defaultCell)
 import DNAnts.State.CellState
        (CellState(CellState, cellType),
@@ -14,7 +16,7 @@ import DNAnts.State.CellState
         defaultCellState)
 import DNAnts.State.GameState
        (GameState(GameState, appSettings, gridBack, gridExtents,
-                  gridFront, nteams, populBack, populFront, roundCount),
+                  _gridFront, nteams, populBack, _populFront, _roundCount),
         gridState)
 import DNAnts.State.Grid
        (Grid(Grid, _cells, _extents), gridHeight, gridWidth, indexedCells)
@@ -27,11 +29,11 @@ import DNAnts.State.Population (Population)
 import DNAnts.Types
        (AppSettings(AppSettings, framesPerSecond, gridExtents,
                     gridSpacing, initTeamSize, numTeams),
-        Color, Position, divA, rect, rgb, rgba)
+        Color, Position, divA, rect, rgb, rgba, toColor3)
 import DNAnts.Types.Orientation
        (Orientation, directionOfOrientation, noOrientation)
 import qualified DNAnts.Types.Orientation as Orientation
-import DNAnts.View.Sprites (Sprite, Sprites(Sprites, rock, sugah1))
+import DNAnts.View.Sprites (Sprite, Sprites(Sprites, rock, sugah1, ant1))
 import DNAnts.View.Window (Window(Window, renderer, window))
 import Data.Foldable (forM_)
 import Foreign.C.Types (CInt)
@@ -43,16 +45,16 @@ import SDL.Vect (Point(P), V2(V2))
 -- TODO _app
 data AppPlayState = AppPlayState
   { active :: Bool
-  , paused :: Bool
-  , step :: Bool
+  , _paused :: Bool
+  , _step :: Bool
   , showCommands :: Bool
   , showInTraces :: Bool
   , showOutTraces :: Bool
-  , lastRoundMs :: Word32
+  , _lastRoundMs :: Word32
   , gridSpacing :: Int
   , gridExtents :: (Int, Int)
   , markedCell :: (Int, Int)
-  , gameState :: GameState
+  , _gameState :: GameState
   , sprites :: Sprites
   , teamColors :: [Color]
   , mapRgbMode :: Color
@@ -62,6 +64,8 @@ data AppPlayState = AppPlayState
   , foodColor :: Color
   , grassColor :: Color
   }
+
+makeLenses ''AppPlayState
 
 createMapConfig :: AppSettings -> MapConfig
 createMapConfig AppSettings {numTeams, gridExtents, initTeamSize} =
@@ -83,29 +87,29 @@ createGameState appSettings@AppSettings {gridExtents, gridSpacing, numTeams} = d
     { appSettings
     , nteams = numTeams
     , gridExtents
-    , roundCount = 0
-    , gridFront = grid
+    , _roundCount = 0
+    , _gridFront = grid
     , gridBack = undefined -- TODO
-    , populFront = population
+    , _populFront = population
     , populBack = undefined -- TODO
     }
 
 defaultAppPlayState :: AppSettings -> Sprites -> IO AppPlayState
 defaultAppPlayState appSettings@AppSettings {gridExtents, gridSpacing, numTeams} sprites = do
-  gameState <- createGameState appSettings
+  _gameState <- createGameState appSettings
   return
     AppPlayState
     { active = True
-    , paused = True
-    , step = False
+    , _paused = False
+    , _step = False
     , showCommands = True
     , showInTraces = True
     , showOutTraces = True
-    , lastRoundMs = 0
+    , _lastRoundMs = 0
     , gridSpacing
     , gridExtents
     , markedCell = (-1, -1)
-    , gameState
+    , _gameState
     , sprites
     , teamColors =
         [ rgba 0xff 0x12 0x66 0x88
@@ -131,8 +135,8 @@ draw settings window@Window {renderer} state = do
   SDL.present renderer
 
 renderMap :: AppSettings -> Window -> AppPlayState -> IO ()
-renderMap settings window AppPlayState {gameState, sprites} =
-  forM_ (indexedCells $ gridState gameState) $ \(Cell CellState {cellType}, (x, y)) ->
+renderMap settings window AppPlayState {_gameState, sprites} =
+  forM_ (indexedCells $ gridState _gameState) $ \(Cell CellState {cellType}, (x, y)) ->
     case cellType of
       Barrier -> renderCell settings window (rock sprites) (x, y)
       Food -> renderCell settings window (sugah1 sprites) (x, y)
@@ -147,21 +151,21 @@ renderCell AppSettings {gridSpacing} Window {renderer} texture (cellX, cellY) = 
   SDL.copy renderer texture Nothing (Just dstRect)
 
 renderObjects :: AppSettings -> Window -> AppPlayState -> IO ()
-renderObjects AppSettings {gridSpacing} window AppPlayState { gameState
+renderObjects settings@AppSettings {gridSpacing} window AppPlayState { _gameState
                                                             , sprites
                                                             , teamColors
                                                             } =
-  let teams = populFront gameState
+  let teams = _populFront _gameState
   in forM_ (zip teamColors teams) $
-     uncurry $ \teamColor AntTeam {spawnPoints, ants} -> do
-       forM_ spawnPoints $ \spawnPoint ->
+     uncurry $ \teamColor AntTeam {_spawnPoints, _ants} -> do
+       forM_ _spawnPoints $ \spawnPoint ->
          drawCellCircle
            window
            (fromIntegral <$> spawnPoint)
            (fromIntegral gridSpacing)
            noOrientation
            teamColor
-       forM_ ants renderAnt
+       forM_ _ants $ renderAnt settings window sprites teamColor
 
 type LineSegment = (Point V2 CInt, Point V2 CInt)
 
@@ -210,5 +214,9 @@ drawCellCircle Window {renderer} pos gridSpacing ornt color = do
 toLineSegment :: [Point V2 CInt] -> [LineSegment]
 toLineSegment points = zip points $ tail points
 
-renderAnt :: Ant -> IO ()
-renderAnt ant = return ()
+renderAnt ::  AppSettings -> Window -> Sprites -> Color -> Ant -> IO ()
+renderAnt settings window sprites color Ant {state} = do
+  -- TODO check if ant is alive
+  let texture = ant1 sprites
+  SDL.textureColorMod texture $= toColor3 color
+  renderCell settings window texture (pos state)
