@@ -1,10 +1,11 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
 module DNAnts.State.Grid where
 
 import Control.Lens (makeLenses, view)
 import Control.Monad.Trans.State.Lazy (StateT)
-import DNAnts.State.Cell (Cell, updateCell)
+import DNAnts.State.Cell
 import DNAnts.State.CellState (CellState)
 import DNAnts.Types (Extents, Position, defaultExtents)
 import Lens.Family2.State.Lazy (zoom)
@@ -47,3 +48,26 @@ data NeighborGrid = NeighborGrid
 
 updateGrid :: StateT Grid IO ()
 updateGrid = zoom (cells . traverse . traverse) updateCell
+
+{- |
+Access cell at a specific point in the grid.
+
+>>> cellAt (V2 2 1) [[0..2],[3..5]]
+5
+
+-}
+cellAt :: Position -> [[Cell]] -> Cell
+cellAt pos@(V2 x y) = (!! x) . (!! y)
+
+containsPosition :: Position -> Grid -> Bool
+containsPosition (V2 x y) Grid {_extents = V2 w h} =
+  and [x >= 0, y >= 0, x < w, y < h]
+
+allowsMoveTo :: Position -> Grid -> Bool
+allowsMoveTo pos grid =
+  let cell = cellAt pos $ _cells grid
+  in and
+       [ containsPosition pos grid
+       , not $ isCellTaken cell
+       , not $ isObstacle cell
+       ]

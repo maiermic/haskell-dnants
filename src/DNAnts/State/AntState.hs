@@ -1,11 +1,15 @@
 {-# LANGUAGE DisambiguateRecordFields #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module DNAnts.State.AntState where
 
-import SDL.Vect
+import Control.Lens
+import Control.Monad.Trans.State.Lazy (StateT)
+import DNAnts.Lens
 import DNAnts.Types (Direction, Position)
+import SDL.Vect
 
 data AntId = AntId
   { teamId :: Int
@@ -20,6 +24,7 @@ data AntMode
   | Eating
   | Harvesting
   | Dead
+  deriving (Eq, Show)
 
 data AntAction
   = DoIdle
@@ -29,58 +34,73 @@ data AntAction
   | DoDrop
   | DoAttack
   | DoTurn
+  deriving (Eq, Show)
 
 data StateEvents = StateEvents
-  { collision :: Bool
-  , attacked :: Bool
-  , food :: Bool
-  , enemy :: Bool
-  }
+  { _collision :: Bool
+  , _attacked :: Bool
+  , _food :: Bool
+  , _enemy :: Bool
+  } deriving (Eq)
 
 defaultStateEvents =
-  StateEvents {collision = False, attacked = False, food = False, enemy = False}
+  StateEvents
+  {_collision = False, _attacked = False, _food = False, _enemy = False}
 
 data AntState = AntState
   { id :: Int
   , teamID :: Int
-  , pos :: Position
-  , dist :: Position
-  , dir :: Direction
+  , _pos :: V2 Int
+  , _dist :: Position
+  , _dir :: V2 Int
   , lastDirChange :: Int
   , strength :: Int
   , damage :: Int
   , numCarrying :: Int
-  , nticksNotFed :: Int
+  , _nticksNotFed :: Int
   , tickCount :: Int
-  , events :: StateEvents
+  , _events :: StateEvents
   , enemyDir :: Direction
-  , action :: AntAction
-  , mode :: AntMode
-  }
+  , _action :: AntAction
+  , _mode :: AntMode
+  } deriving (Eq)
+
+makeLenses ''StateEvents
+
+makeLenses ''AntState
 
 defaultAntState =
   AntState
   { id = 0
   , teamID = 0
-  , pos = V2 0 0
-  , dist = V2 0 0
-  , dir = V2 0 0
+  , _pos = V2 0 0
+  , _dist = V2 0 0
+  , _dir = V2 0 0
   , lastDirChange = 0
   , strength = 0
   , damage = 0
   , numCarrying = 0
-  , nticksNotFed = 0
+  , _nticksNotFed = 0
   , tickCount = 0
-  , events = defaultStateEvents
+  , _events = defaultStateEvents
   , enemyDir = V2 0 0
-  , action = DoMove
-  , mode = Scouting
+  , _action = DoMove
+  , _mode = Scouting
   }
 
 updateInitAntState :: Int -> AntState -> AntState
-updateInitAntState tickCount state@AntState {events} =
+updateInitAntState tickCount state@AntState {_events} =
   state
   { tickCount
   , damage = 0
-  , events = events {enemy = False, food = False, attacked = False}
+  , _events = _events {_enemy = False, _food = False, _attacked = False}
   }
+
+isAlive :: Optic' (->) (Const Bool) AntState Bool
+isAlive = mode ./= Dead
+
+hasDir :: Optic' (->) (Const Bool) AntState Bool
+hasDir = dir ./= (V2 0 0)
+
+nextPos :: Optic' (->) (Const Position) AntState Position
+nextPos = pos .+. dir

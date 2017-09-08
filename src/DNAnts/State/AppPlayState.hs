@@ -223,4 +223,4 @@ renderAnt settings window sprites color Ant {_state} = do
   -- TODO check if ant is alive
   let texture = ant1 sprites
   SDL.textureColorMod texture $= toColor3 color
-  renderCell settings window texture (pos _state)
+  renderCell settings window texture (_pos _state)

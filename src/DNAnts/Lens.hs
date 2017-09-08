@@ -48,7 +48,7 @@ viewEachM ::
      Monad m => LensLike' (Focusing m c) t s -> (s -> m c) -> StateT t m c
 viewEachM g f = zoom g $ id .=> f
 
-infix 4 .=>, .=>>, .=., .>=., .>=
+infix 4 .=>, .=>>, .=., .>=., .>=, .==, ./=, .+=.
 
 {- |
 Operator alias of @viewM@ to run monadic action on state of a getter lens.
@@ -85,6 +85,9 @@ l <~% f = modifyingM l f
 (.=.) :: MonadState s m => ASetter s s a b -> Getting b s b -> m ()
 left .=. right = use right >>= (left .=)
 
+(.+=.) ::  (Num a, MonadState s m) => ASetter' s a -> Getting a s a -> m ()
+left .+=. right = use right >>= (left +=)
+
 (.>=.) ::
      (Ord a, Contravariant f, Profunctor p)
   => Getting a s a
@@ -92,12 +95,60 @@ left .=. right = use right >>= (left .=)
   -> Optic' p f s Bool
 left .>=. right = to $ (>=) <$> view left <*> view right
 
+infixl 6 .+., .-.
+
+(.+.) ::
+     (Num n, Contravariant f, Profunctor p)
+  => Getting n s n
+  -> Getting n s n
+  -> Optic' p f s n
+left .+. right = to $ (+) <$> view left <*> view right
+
+(.-.) ::
+     (Num n, Contravariant f, Profunctor p)
+  => Getting n s n
+  -> Getting n s n
+  -> Optic' p f s n
+left .-. right = to $ (-) <$> view left <*> view right
+
+infixr 3 .&&.
+
+(.&&.) ::
+     (Contravariant f, Profunctor p)
+  => Getting Bool s Bool
+  -> Getting Bool s Bool
+  -> Optic' p f s Bool
+left .&&. right = to $ (&&) <$> view left <*> view right
+
+infixr 2 .||.
+
+(.||.) ::
+     (Contravariant f, Profunctor p)
+  => Getting Bool s Bool
+  -> Getting Bool s Bool
+  -> Optic' p f s Bool
+left .||. right = to $ (||) <$> view left <*> view right
+
 (.>=) ::
      (Ord a, Contravariant f, Profunctor p)
   => Optic' p f s a
   -> a
   -> Optic' p f s Bool
 left .>= right = left . to (>= right)
+
+(.==) ::
+     (Eq a, Contravariant f, Profunctor p)
+  => Optic' p f s a
+  -> a
+  -> Optic' p f s Bool
+left .== right = left . to (== right)
+
+(./=) ::
+     (Eq a, Contravariant f, Profunctor p)
+  => Optic' p f s a
+  -> a
+  -> Optic' p f s Bool
+left ./= right = left . to (/= right)
 
 unlessL :: MonadState s m => Getting Bool s Bool -> m () -> m ()
 unlessL g f = do

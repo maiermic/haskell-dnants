@@ -14,6 +14,7 @@ data CellType
   | Grass
   | Water
   | Food
+  deriving Eq
 
 data CellState = CellState
   { cellType :: CellType
