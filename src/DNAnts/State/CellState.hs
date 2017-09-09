@@ -39,3 +39,6 @@ defaultCellState =
   , _tracesIn = undefined
   , _tracesOut = undefined
   }
+
+numFood :: Lens' CellState Int
+numFood = amount

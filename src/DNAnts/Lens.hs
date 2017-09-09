@@ -129,6 +129,13 @@ infixr 2 .||.
   -> Optic' p f s Bool
 left .||. right = to $ (||) <$> view left <*> view right
 
+gtL ::
+     (Ord a, Contravariant f, Profunctor p)
+  => Optic' p f s a
+  -> a
+  -> Optic' p f s Bool
+gtL left right = left . to (> right)
+
 (.>=) ::
      (Ord a, Contravariant f, Profunctor p)
   => Optic' p f s a

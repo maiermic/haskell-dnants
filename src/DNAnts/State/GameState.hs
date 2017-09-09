@@ -17,7 +17,7 @@ import DNAnts.State.Ant as AT
 import DNAnts.State.Ant
 import DNAnts.State.AntState
 import DNAnts.State.AntState as AS
-import DNAnts.State.Cell (isCellTaken)
+import DNAnts.State.Cell
 import DNAnts.State.Grid
 import DNAnts.State.Map
 import DNAnts.State.Population (Population)
@@ -54,6 +54,19 @@ updatePopulation = do
   tickCount <- use roundCount
   traverseAntStates %= updateInitAntState tickCount
   zoom traverseAntStates updatePosition
+  use (to gridState) >>= zoom traverseAntStates . updateAction
+
+updateAction :: Grid -> StateT AntState IO ()
+updateAction grid = do
+  whenL isAlive $ do
+    events . food .=. cellOfAnt grid . isFoodCell
+    -- TODO scan for enemies
+    -- TODO request next state
+    -- TODO apply action
+
+isFoodCell = isNotSpawnPoint .&&. containsFood
+
+cellOfAnt Grid {_cells} = AS.pos . to (flip cellAt _cells)
 
 traverseAntStates ::
      Applicative f => (AntState -> f AntState) -> GameState -> f GameState
