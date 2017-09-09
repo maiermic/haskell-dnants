@@ -11,7 +11,7 @@ import DNAnts.State.Ant hiding (teamSize)
 import DNAnts.State.AntState
 import DNAnts.State.Cell (Cell(Cell), defaultCell)
 import DNAnts.State.CellState
-       (CellState(CellState, cellType),
+       (CellState(CellState, _cellType),
         CellType(Barrier, Food, Grass, None, Plain, SpawnPoint, Water),
         defaultCellState)
 import DNAnts.State.GameState
@@ -140,8 +140,8 @@ draw settings window@Window {renderer} state = do
 
 renderMap :: AppSettings -> Window -> AppPlayState -> IO ()
 renderMap settings window AppPlayState {_gameState, sprites} =
-  forM_ (indexedCells $ gridState _gameState) $ \(Cell CellState {cellType}, pos) ->
-    case cellType of
+  forM_ (indexedCells $ gridState _gameState) $ \(Cell CellState {_cellType}, pos) ->
+    case _cellType of
       Barrier -> renderCell settings window (rock sprites) pos
       Food -> renderCell settings window (sugah1 sprites) pos
       _ -> mempty

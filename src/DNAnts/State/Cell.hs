@@ -4,6 +4,7 @@ module DNAnts.State.Cell where
 
 import Control.Monad.Trans.State.Lazy (StateT)
 import DNAnts.State.CellState
+import Control.Lens
 import Lens.Family2.State.Lazy (zoom)
 
 data Cell =
@@ -14,8 +15,16 @@ defaultCell = Cell defaultCellState
 updateCell :: StateT Cell IO ()
 updateCell = return () -- TODO lower intensity of traces
 
+cellState (Cell _cellState) = _cellState
+
+cellStateL = to cellState
+
+cellTypeL = cellStateL . cellType
+
+isCellTypeL t = cellTypeL . to (== t)
+
 isCellTaken :: Cell -> Bool
-isCellTaken (Cell CellState {taken}) = taken
+isCellTaken = view $ cellStateL . taken
 
 isObstacle :: Cell -> Bool
-isObstacle (Cell CellState {cellType}) = cellType == Barrier
+isObstacle = view $ isCellTypeL Barrier

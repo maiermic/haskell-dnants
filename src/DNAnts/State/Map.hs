@@ -16,7 +16,7 @@ import Control.Monad.Trans.State
 import DNAnts.State.Ant
 import DNAnts.State.Cell (Cell(Cell), defaultCell)
 import DNAnts.State.CellState
-       (CellType(Barrier, Food, Plain, SpawnPoint), cellType,
+       (CellType(Barrier, Food, Plain, SpawnPoint), _cellType,
         defaultCellState)
 import DNAnts.State.Grid
        (Grid(Grid, _cells, _extents), defaultGrid)
@@ -82,7 +82,7 @@ generateGrid config@MapConfig {extents = _extents} = do
   return Grid {_cells, _extents}
 
 cellOfType :: CellType -> Cell
-cellOfType cellType = Cell defaultCellState {cellType}
+cellOfType _cellType = Cell defaultCellState {_cellType}
 
 generateGridCells :: MonadIO m => MapConfig -> StateT (GridCells Cell) m ()
 generateGridCells MapConfig { extents

@@ -1,5 +1,8 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 module DNAnts.State.CellState where
 
+import Control.Lens
 import DNAnts.State.AntState (AntId)
 
 type Trace = Int
@@ -17,20 +20,22 @@ data CellType
   deriving Eq
 
 data CellState = CellState
-  { cellType :: CellType
-  , amount :: Int
-  , taken :: Bool
-  , antID :: AntId
-  , tracesIn :: [Traces]
-  , tracesOut :: [Traces]
+  { _cellType :: CellType
+  , _amount :: Int
+  , _taken :: Bool
+  , _antID :: AntId
+  , _tracesIn :: [Traces]
+  , _tracesOut :: [Traces]
   }
+
+makeLenses '' CellState
 
 defaultCellState =
   CellState
-  { cellType = Plain
-  , amount = 0
-  , taken = False
-  , antID = undefined
-  , tracesIn = undefined
-  , tracesOut = undefined
+  { _cellType = Plain
+  , _amount = 0
+  , _taken = False
+  , _antID = undefined
+  , _tracesIn = undefined
+  , _tracesOut = undefined
   }
