@@ -15,7 +15,7 @@ import SDL.Vect
 data AntMode
   = Waiting
   | Scouting
-  | Haming
+  | Homing
   | Eating
   | Harvesting
   | Dead

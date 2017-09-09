@@ -8,6 +8,7 @@ module DNAnts.State.GameState where
 
 import Control.Monad.Trans.Class (lift, MonadTrans)
 import Control.Monad.Extra
+import DNAnts.Client
 import Data.Maybe
 import Data.Foldable
 import Control.Lens.Traversal
@@ -15,7 +16,7 @@ import Control.Lens
        ((<>=), (%=), (+=), (-=), (.=), (^?), ix, makeLenses, to, use, view, Contravariant, Profunctor, Optic', LensLike', preuse)
 import Control.Monad (forM_, when)
 import Control.Monad.IO.Class (liftIO, MonadIO)
-import Control.Monad.Trans.State.Lazy (StateT, get)
+import Control.Monad.Trans.State.Lazy (StateT, get, execStateT)
 import DNAnts.Debug (debugShow)
 import DNAnts.Lens
 import DNAnts.State.Ant as AT -- TODO move AntTeam to own module
@@ -30,6 +31,7 @@ import DNAnts.State.Grid
 import DNAnts.State.Map
 import DNAnts.State.Population (Population)
 import DNAnts.Types
+import DNAnts.Types.Orientation
 import Lens.Family2.State.Lazy (zoom)
 import SDL.Vect (V2(V2))
 
@@ -67,7 +69,7 @@ updatePopulation = do
   updateAntTeams
   tickCount <- use roundCount
   traverseAntStates %= updateInitAntState tickCount
-  zoom traverseAntStates updatePosition
+  traverseAntStatesNested updatePosition
   traverseAntStatesNested updateAction
   handleAttacks
   traverseAntStatesNested updateReaction
@@ -129,7 +131,7 @@ updateAction = do
   whenL isAlive $ do
     events . food .=. cellOfAnt (gridState gameState) . isFoodCell
     scanForEnemies gameState
-    -- TODO request next state
+    updateAntState
     applyActions
 
 updateReaction :: MonadIO m => NestedAntState m
@@ -258,21 +260,21 @@ addAntAt pos = do
   ants %= \ants' -> ants' ++ [createAnt team (length ants') pos]
   ants .=>> debugShow "ants" . length
 
-updatePosition :: StateT AntState IO ()
+updatePosition :: MonadIO m => NestedAntState m
 updatePosition = do
-  mode .=> debugShow "mode"
+  mode .=> liftIO . debugShow "mode"
   whenL isAlive $ do
     nticksNotFed += 1
-    action .=> debugShow "action"
+    action .=> liftIO . debugShow "action"
     use action >>= \case
       DoMove -> move
       _ -> action .= DoIdle
 
-move :: StateT AntState IO ()
+move :: MonadIO m => NestedAntState m
 move = whenL (isAlive .&&. hasDir) $ do
   pos' <- use nextPos
-  let grid = undefined -- TODO
-  if allowsMoveTo pos' grid
+  gameState <- liftGameState get
+  if allowsMoveTo pos' (gridState gameState)
   then do
     events . collision .= False
     dist .+=. dir
@@ -280,5 +282,33 @@ move = whenL (isAlive .&&. hasDir) $ do
     AS.pos .= pos'
   else onCollision
 
-onCollision :: StateT AntState IO ()
+turnDir :: MonadIO m => Int -> StateT AntState m ()
+turnDir 0 = return ()
+turnDir turn =
+  dir %= \dir' ->
+    let ortIdx = turn + (or2int $ dir2or dir')
+    in or2dir $ int2or $ clampOrientation ortIdx
+
+onCollision :: MonadIO m => NestedAntState m
 onCollision = events . collision .= True
+
+-- TODO solve cyclic import to be able to move this to client
+updateAntState :: MonadIO m => NestedAntState m
+updateAntState = simpleClient
+
+simpleClient :: MonadIO m => NestedAntState m
+simpleClient = do
+  AntState {_mode, _events, tickCount} <- get
+  let StateEvents {_collision, _attacked, _food, _enemy} = _events
+  case _mode of
+    Scouting -> do
+      if _collision
+        then turnDir 1
+        else if tickCount `mod` 6 == 0
+               then turnDir 1
+               else when (tickCount `mod` 3 == 0) $ turnDir (-1)
+      move
+    Eating -> eat
+    Harvesting -> harvest
+    Homing -> move
+    _ -> return ()
