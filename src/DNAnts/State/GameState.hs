@@ -69,7 +69,18 @@ updatePopulation = do
   traverseAntStates %= updateInitAntState tickCount
   zoom traverseAntStates updatePosition
   traverseAntStatesNested updateAction
-  -- TODO handle attacks
+  handleAttacks
+
+handleAttacks :: StateT GameState IO ()
+handleAttacks = do
+  as <- use attacks
+  forM_ as $ \Attack {_offender, _defender} -> do
+    let defenderId = AS.id $ A._state _defender
+    traverseAntStates %= \antState ->
+      if AS.id antState == defenderId
+        then antState {damage = damage antState + _strength _offender}
+        else antState
+  attacks .= []
 
 traverseAntStates ::
      Applicative f => (AntState -> f AntState) -> GameState -> f GameState
