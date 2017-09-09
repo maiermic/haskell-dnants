@@ -77,15 +77,33 @@ g .=>> f = viewEachM g f
 modifyingM :: Monad m => Lens' s a -> (a -> m a) -> StateT s m ()
 modifyingM l f = use l >>= lift . f >>= assign l
 
-infixr 2 <~%
+infixr 2 <~%, <<~%
 
 (<~%) :: Monad m => Lens' s a -> (a -> m a) -> StateT s m ()
 l <~% f = modifyingM l f
 
+(<<~%) ::
+     (Monad m, Traversable t)
+  => Lens' o (t i)
+  -> StateT i (StateT o m) ()
+  -> StateT o m ()
+l <<~% f = traverseInnerState l f
+
+{- |
+Traverse inner state @i@ of outer state @o@ using a nested state transformer.
+-}
+traverseInnerState ::
+     (Monad m, Traversable t)
+  => Lens' o (t i)
+  -> StateT i (StateT o m) ()
+  -> StateT o m ()
+traverseInnerState l f = use l >>= traverse (execStateT f) >>= assign l
+
+
 (.=.) :: MonadState s m => ASetter s s a b -> Getting b s b -> m ()
 left .=. right = use right >>= (left .=)
 
-(.+=.) ::  (Num a, MonadState s m) => ASetter' s a -> Getting a s a -> m ()
+(.+=.) :: (Num a, MonadState s m) => ASetter' s a -> Getting a s a -> m ()
 left .+=. right = use right >>= (left +=)
 
 (.>=.) ::

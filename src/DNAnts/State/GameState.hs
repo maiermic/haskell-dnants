@@ -6,13 +6,15 @@
 
 module DNAnts.State.GameState where
 
+import Control.Monad.Trans.Class (lift, MonadTrans)
 import Control.Monad.Extra
 import Data.Maybe
 import Data.Foldable
+import Control.Lens.Traversal
 import Control.Lens
        ((%=), (+=), (-=), (.=), (^?), ix, makeLenses, to, use, view)
 import Control.Monad (forM_, when)
-import Control.Monad.IO.Class (liftIO)
+import Control.Monad.IO.Class (liftIO, MonadIO)
 import Control.Monad.Trans.State.Lazy (StateT, get)
 import DNAnts.Debug (debugShow)
 import DNAnts.Lens
@@ -58,22 +60,40 @@ updatePopulation = do
   tickCount <- use roundCount
   traverseAntStates %= updateInitAntState tickCount
   zoom traverseAntStates updatePosition
-  get >>= zoom traverseAntStates . updateAction
+  traverseAntStatesNested updateAction
 
-updateAction :: GameState -> StateT AntState IO ()
-updateAction gameState = do
+traverseAntStates ::
+     Applicative f => (AntState -> f AntState) -> GameState -> f GameState
+traverseAntStates = populFront . traverse . ants . traverse . AT.state
+
+traverseAntStatesNested ::
+     Monad m
+  => StateT AntState (StateT [Ant] (StateT GameState m)) ()
+  -> StateT GameState m ()
+traverseAntStatesNested fn =
+  populFront <<~% do zoom ants $ Prelude.id <<~% zoom AT.state fn
+
+type NestedAntState m = StateT AntState (StateT [Ant] (StateT GameState m)) ()
+
+liftGameState :: (Monad (t m), Monad m, MonadTrans t, MonadTrans t1) =>
+     m a -> t1 (t m) a
+liftGameState = lift . lift
+
+updateAction :: MonadIO m => NestedAntState m
+updateAction = do
+  gameState <- liftGameState get
   whenL isAlive $ do
     events . food .=. cellOfAnt (gridState gameState) . isFoodCell
     scanForEnemies gameState
     -- TODO request next state
     -- TODO apply action
 
-scanForEnemies :: GameState -> StateT AntState IO ()
+scanForEnemies :: Monad m => GameState -> StateT AntState m ()
 scanForEnemies GameState {_gridFront, _populFront} = do
   AntState {_pos, teamID} <- get
   whenJust (findAliveAdjEnemy teamID _pos _gridFront _populFront) onEnemy
 
-onEnemy :: Ant -> StateT AntState IO ()
+onEnemy :: Monad m => Ant -> StateT AntState m ()
 onEnemy Ant {_state = AntState {_pos = enemyPos}} = do
   enemyDir .=. AS.pos . to (enemyPos -)
   events . enemy .= True
@@ -119,10 +139,6 @@ adjDir = concat [[V2 x y | x <- [-1 .. 1], V2 x y /= V2 0 0] | y <- [-1 .. 1]]
 isFoodCell = isNotSpawnPoint .&&. containsFood
 
 cellOfAnt Grid {_cells} = AS.pos . to (`cellAt` _cells)
-
-traverseAntStates ::
-     Applicative f => (AntState -> f AntState) -> GameState -> f GameState
-traverseAntStates = populFront . traverse . ants . traverse . AT.state
 
 updateAntTeams :: StateT GameState IO ()
 updateAntTeams = whenL (roundCount . to isSpawnRound) spawnAnts
