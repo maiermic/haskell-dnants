@@ -6,17 +6,21 @@
 
 module DNAnts.State.AppPlayState where
 
+import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad (when)
 import Control.Lens
+import DNAnts.Debug
 import DNAnts.State.Ant hiding (teamSize)
 import DNAnts.State.AntState
 import DNAnts.State.Cell (Cell(Cell), defaultCell)
 import DNAnts.State.CellState
-       (CellState(CellState, _cellType),
+       (CellState(CellState, _amount, _cellType),
         CellType(Barrier, Food, Grass, None, Plain, SpawnPoint, Water),
         defaultCellState)
 import DNAnts.State.GameState
-       (GameState(GameState, appSettings, gridBack, gridExtents,
-                  _gridFront, nteams, populBack, _populFront, _roundCount, _attacks),
+       (GameState(GameState, _attacks, _gridFront, _populFront,
+                  _roundCount, appSettings, gridBack, gridExtents, nteams,
+                  populBack),
         gridState)
 import DNAnts.State.Grid
        (Grid(Grid, _cells, _extents), gridHeight, gridWidth, indexedCells)
@@ -33,7 +37,7 @@ import DNAnts.Types
 import DNAnts.Types.Orientation
        (Orientation, directionOfOrientation, noOrientation)
 import qualified DNAnts.Types.Orientation as Orientation
-import DNAnts.View.Sprites (Sprite, Sprites(Sprites, rock, sugah1, ant1))
+import DNAnts.View.Sprites
 import DNAnts.View.Window (Window(Window, renderer, window))
 import Data.Foldable (forM_)
 import Foreign.C.Types (CInt)
@@ -141,11 +145,29 @@ draw settings window@Window {renderer} state = do
 
 renderMap :: AppSettings -> Window -> AppPlayState -> IO ()
 renderMap settings window AppPlayState {_gameState, sprites} =
-  forM_ (indexedCells $ gridState _gameState) $ \(Cell CellState {_cellType}, pos) ->
-    case _cellType of
+  forM_ (indexedCells $ gridState _gameState) $ \(Cell cellState, pos) ->
+    case _cellType cellState of
       Barrier -> renderCell settings window (rock sprites) pos
-      Food -> renderCell settings window (sugah1 sprites) pos
+      Food -> renderFoodCell settings window sprites pos cellState
       _ -> mempty
+
+renderFoodCell ::
+     AppSettings -> Window -> Sprites -> Position -> CellState -> IO ()
+renderFoodCell settings window sprites pos cellState =
+  let amountLeft = _amount cellState
+      amountMax = 4
+      amountQurt = (((amountLeft * 100) `div` amountMax) `div` 25) + 1
+      sprite =
+        case amountQurt of
+          1 -> sugah1 sprites
+          2 -> sugah2 sprites
+          3 -> sugah3 sprites
+          4 -> sugah4 sprites
+          _ ->
+            error $
+            "amountQurt is not a value between 1 and 4: " ++ show amountQurt
+  in when (amountQurt > 0) $ do
+    renderCell settings window sprite pos
 
 renderCell :: AppSettings -> Window -> Sprite -> Position -> IO ()
 renderCell AppSettings {gridSpacing} Window {renderer} texture (V2 cellX cellY) = do
@@ -157,9 +179,9 @@ renderCell AppSettings {gridSpacing} Window {renderer} texture (V2 cellX cellY) 
 
 renderObjects :: AppSettings -> Window -> AppPlayState -> IO ()
 renderObjects settings@AppSettings {gridSpacing} window AppPlayState { _gameState
-                                                            , sprites
-                                                            , teamColors
-                                                            } =
+                                                                     , sprites
+                                                                     , teamColors
+                                                                     } =
   let teams = _populFront _gameState
   in forM_ (zip teamColors teams) $
      uncurry $ \teamColor AntTeam {_spawnPoints, _ants} -> do
@@ -219,9 +241,10 @@ drawCellCircle Window {renderer} pos gridSpacing ornt color = do
 toLineSegment :: [Point V2 CInt] -> [LineSegment]
 toLineSegment points = zip points $ tail points
 
-renderAnt ::  AppSettings -> Window -> Sprites -> Color -> Ant -> IO ()
-renderAnt settings window sprites color Ant {_state} = do
+renderAnt :: AppSettings -> Window -> Sprites -> Color -> Ant -> IO ()
+renderAnt settings window sprites color Ant {_state}
   -- TODO check if ant is alive
+ = do
   let texture = ant1 sprites
   SDL.textureColorMod texture $= toColor3 color
   renderCell settings window texture (_pos _state)
