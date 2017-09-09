@@ -56,7 +56,7 @@ Access cell at a specific point in the grid.
 5
 
 -}
-cellAt :: Position -> [[Cell]] -> Cell
+cellAt :: Position -> [[c]] -> c
 cellAt pos@(V2 x y) = (!! x) . (!! y)
 
 containsPosition :: Position -> Grid -> Bool

@@ -418,7 +418,7 @@ gridRegionOf rows = Rectangle (P (V2 0 0)) $ gridExtentsOf rows
 Get extents of a grid.
 
 >>> gridExtentsOf $ gridCellNumbers 3 4
-(3,4)
+V2 3 4
 
 -}
 gridExtentsOf :: GridCells a -> Extents
