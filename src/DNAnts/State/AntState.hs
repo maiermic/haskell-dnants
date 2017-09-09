@@ -50,7 +50,7 @@ data AntState = AntState
   , _dir :: V2 Int
   , lastDirChange :: Int
   , _strength :: Int
-  , damage :: Int
+  , _damage :: Int
   , _numCarrying :: Int
   , _nticksNotFed :: Int
   , tickCount :: Int
@@ -73,7 +73,7 @@ defaultAntState =
   , _dir = V2 0 0
   , lastDirChange = 0
   , _strength = 0
-  , damage = 0
+  , _damage = 0
   , _numCarrying = 0
   , _nticksNotFed = 0
   , tickCount = 0
@@ -87,7 +87,7 @@ updateInitAntState :: Int -> AntState -> AntState
 updateInitAntState tickCount state@AntState {_events} =
   state
   { tickCount
-  , damage = 0
+  , _damage = 0
   , _events = _events {_enemy = False, _food = False, _attacked = False}
   }
 

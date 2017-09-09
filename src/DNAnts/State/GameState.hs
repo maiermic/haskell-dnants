@@ -70,6 +70,7 @@ updatePopulation = do
   zoom traverseAntStates updatePosition
   traverseAntStatesNested updateAction
   handleAttacks
+  traverseAntStatesNested updateReaction
 
 handleAttacks :: StateT GameState IO ()
 handleAttacks = do
@@ -78,7 +79,7 @@ handleAttacks = do
     let defenderId = AS.id $ A._state _defender
     traverseAntStates %= \antState ->
       if AS.id antState == defenderId
-        then antState {damage = damage antState + _strength _offender}
+        then antState {_damage = _damage antState + _strength _offender}
         else antState
   attacks .= []
 
@@ -109,6 +110,16 @@ takeFoodNL = do
   liftGameState $ gridCellStateL p . CS.numFood -= consumed
   return consumed
 
+dieNL :: Monad m => NestedAntState m
+dieNL = do
+  mode .= Dead
+  -- TODO leave cell
+
+dropFoodNL :: Monad m => Int -> NestedAntState m
+dropFoodNL dropAmount = do
+  p <- use AS.pos
+  liftGameState $ gridCellStateL p . CS.numFood -= dropAmount
+
 gridCellStateL ::  Applicative f => Position -> LensLike' f GameState CellState
 gridCellStateL (V2 x y) = gridFront . cells . cellAtL x y . cellStateL
 
@@ -120,6 +131,18 @@ updateAction = do
     scanForEnemies gameState
     -- TODO request next state
     applyActions
+
+updateReaction :: MonadIO m => NestedAntState m
+updateReaction =
+  whenL isAlive $ do
+    AntState {_damage, _numCarrying, _strength} <- get
+    when (_strength <= _damage) $ do
+      if _strength > 1
+      then strength .= max 0 (_strength - _damage `div` _strength)
+      else dieNL
+      when (_numCarrying > 0) $ do
+        dropFoodNL _numCarrying
+        numCarrying .= 0
 
 applyActions :: Monad m => NestedAntState m
 applyActions = do
