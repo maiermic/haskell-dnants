@@ -49,9 +49,9 @@ data AntState = AntState
   , _dist :: Position
   , _dir :: V2 Int
   , lastDirChange :: Int
-  , strength :: Int
+  , _strength :: Int
   , damage :: Int
-  , numCarrying :: Int
+  , _numCarrying :: Int
   , _nticksNotFed :: Int
   , tickCount :: Int
   , _events :: StateEvents
@@ -72,9 +72,9 @@ defaultAntState =
   , _dist = V2 0 0
   , _dir = V2 0 0
   , lastDirChange = 0
-  , strength = 0
+  , _strength = 0
   , damage = 0
-  , numCarrying = 0
+  , _numCarrying = 0
   , _nticksNotFed = 0
   , tickCount = 0
   , _events = defaultStateEvents
@@ -99,3 +99,12 @@ hasDir = dir ./= (V2 0 0)
 
 nextPos :: Optic' (->) (Const Position) AntState Position
 nextPos = pos .+. dir
+
+isCarryCapacityReached :: Optic' (->) (Const Bool) AntState Bool
+isCarryCapacityReached = numCarrying .>=. strength
+
+isCarrying :: Optic' (->) (Const Bool) AntState Bool
+isCarrying = numCarrying `gtL` 0
+
+canAttack :: Optic' (->) (Const Bool) AntState Bool
+canAttack = isCarrying . to not .&&. hasDir

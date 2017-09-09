@@ -16,7 +16,7 @@ import DNAnts.State.CellState
         defaultCellState)
 import DNAnts.State.GameState
        (GameState(GameState, appSettings, gridBack, gridExtents,
-                  _gridFront, nteams, populBack, _populFront, _roundCount),
+                  _gridFront, nteams, populBack, _populFront, _roundCount, _attacks),
         gridState)
 import DNAnts.State.Grid
        (Grid(Grid, _cells, _extents), gridHeight, gridWidth, indexedCells)
@@ -92,6 +92,7 @@ createGameState appSettings@AppSettings {gridExtents, gridSpacing, numTeams} = d
     , gridBack = undefined -- TODO
     , _populFront = population
     , populBack = undefined -- TODO
+    , _attacks = []
     }
 
 defaultAppPlayState :: AppSettings -> Sprites -> IO AppPlayState

@@ -12,18 +12,20 @@ import Data.Maybe
 import Data.Foldable
 import Control.Lens.Traversal
 import Control.Lens
-       ((%=), (+=), (-=), (.=), (^?), ix, makeLenses, to, use, view)
+       ((<>=), (%=), (+=), (-=), (.=), (^?), ix, makeLenses, to, use, view, Contravariant, Profunctor, Optic', LensLike', preuse)
 import Control.Monad (forM_, when)
 import Control.Monad.IO.Class (liftIO, MonadIO)
 import Control.Monad.Trans.State.Lazy (StateT, get)
 import DNAnts.Debug (debugShow)
 import DNAnts.Lens
-import DNAnts.State.Ant as AT
+import DNAnts.State.Ant as AT -- TODO move AntTeam to own module
+import DNAnts.State.Ant as A
 import DNAnts.State.Ant
 import DNAnts.State.AntId as AI
 import DNAnts.State.AntState
 import DNAnts.State.AntState as AS
 import DNAnts.State.Cell
+import DNAnts.State.CellState as CS
 import DNAnts.State.Grid
 import DNAnts.State.Map
 import DNAnts.State.Population (Population)
@@ -40,6 +42,12 @@ data GameState = GameState
   , gridBack :: Grid
   , _populFront :: Population
   , populBack :: Population
+  , _attacks :: [Attack]
+  }
+
+data Attack = Attack
+  { _offender :: AntState
+  , _defender :: Ant
   }
 
 makeLenses ''GameState
@@ -61,6 +69,7 @@ updatePopulation = do
   traverseAntStates %= updateInitAntState tickCount
   zoom traverseAntStates updatePosition
   traverseAntStatesNested updateAction
+  -- TODO handle attacks
 
 traverseAntStates ::
      Applicative f => (AntState -> f AntState) -> GameState -> f GameState
@@ -73,11 +82,24 @@ traverseAntStatesNested ::
 traverseAntStatesNested fn =
   populFront <<~% do zoom ants $ Prelude.id <<~% zoom AT.state fn
 
-type NestedAntState m = StateT AntState (StateT [Ant] (StateT GameState m)) ()
+type NestedAntState' m a = StateT AntState (StateT [Ant] (StateT GameState m)) a
+type NestedAntState m = NestedAntState' m ()
 
 liftGameState :: (Monad (t m), Monad m, MonadTrans t, MonadTrans t1) =>
      m a -> t1 (t m) a
 liftGameState = lift . lift
+
+-- TODO refactor
+takeFoodNL :: Monad m => NestedAntState' m Int
+takeFoodNL = do
+  p <- use AS.pos
+  Just consumed <-
+    liftGameState $ preuse $ gridCellStateL p . CS.numFood . to (min 1)
+  liftGameState $ gridCellStateL p . CS.numFood -= consumed
+  return consumed
+
+gridCellStateL ::  Applicative f => Position -> LensLike' f GameState CellState
+gridCellStateL (V2 x y) = gridFront . cells . cellAtL x y . cellStateL
 
 updateAction :: MonadIO m => NestedAntState m
 updateAction = do
@@ -86,7 +108,40 @@ updateAction = do
     events . food .=. cellOfAnt (gridState gameState) . isFoodCell
     scanForEnemies gameState
     -- TODO request next state
-    -- TODO apply action
+    applyActions
+
+applyActions :: Monad m => NestedAntState m
+applyActions = do
+  use action >>= \case
+    DoEat -> eat
+    DoHarvest -> harvest
+    DoAttack -> attack
+    _ -> return ()
+
+eat :: Monad m => NestedAntState m
+eat = do
+  consumed <- takeFoodNL
+  when (consumed > 0) $ do
+    nticksNotFed .= 0
+    strength %= \s -> min 10 (s + consumed)
+
+
+harvest :: Monad m => NestedAntState m
+harvest =
+  unlessL isCarryCapacityReached $ do
+    consumed <- takeFoodNL
+    when (consumed > 0) $ numCarrying += consumed
+
+attack :: Monad m => NestedAntState m
+attack = do
+  whenL canAttack $ do
+    GameState {_gridFront, _populFront} <- liftGameState get
+    _offender@AntState {_pos, teamID} <- get
+    whenJust (findAliveAdjEnemy teamID _pos _gridFront _populFront) $ \enemy ->
+      addAttack Attack {_offender, _defender = enemy}
+
+addAttack :: Monad m => Attack -> NestedAntState m
+addAttack attack = liftGameState $ attacks <>= [attack]
 
 scanForEnemies :: Monad m => GameState -> StateT AntState m ()
 scanForEnemies GameState {_gridFront, _populFront} = do
@@ -153,12 +208,12 @@ spawnAnts = do
   zoom (populFront . traverse) $ do
     sps <- use spawnPoints
     forM_ sps $ \spawnPoint@(V2 x y) -> do
-      numFood .=> debugShow "numFood"
+      A.numFood .=> debugShow "numFood"
       AT.teamSize .=> debugShow "AT.teamSize"
       unlessL (ants . to length .>=. AT.teamSize) $ do
-        whenL (numFood .>= 8) $ do
+        whenL (A.numFood .>= 8) $ do
           AT.teamSize += 1
-          numFood -= 8
+          A.numFood -= 8
         let (Just baseCell) = grid ^? cells . cellAtL x y
         when (isCellTaken baseCell) $ addAntAt spawnPoint
         addAntAt spawnPoint

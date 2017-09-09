@@ -31,4 +31,4 @@ makeLenses ''AntTeam
 
 createAnt :: AntTeam -> Int -> V2 Int -> Ant
 createAnt team@AntTeam {teamID} id _pos =
-  Ant {team, _state = defaultAntState {AS.id = id, teamID, _pos, strength = 5}}
+  Ant {team, _state = defaultAntState {AS.id = id, teamID, _pos, _strength = 5}}

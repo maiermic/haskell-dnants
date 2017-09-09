@@ -21,8 +21,9 @@ updateCell = return () -- TODO lower intensity of traces
 cellState :: Cell -> CellState
 cellState (Cell _cellState) = _cellState
 
-cellStateL :: (Contravariant f, Profunctor p) => Optic' p f Cell CellState
-cellStateL = to cellState
+--cellStateL :: (Contravariant f, Profunctor p) => Optic' p f Cell CellState
+cellStateL :: Lens' Cell CellState
+cellStateL = lens cellState (\s v -> Cell v)
 
 --cellTypeL :: Optic' (->) (Const Bool) Cell CellType
 cellTypeL = cellStateL . cellType
@@ -43,4 +44,4 @@ containsFood :: Optic' (->) (Const Bool) Cell Bool
 containsFood = gtL (cellStateL . numFood) 0
 
 antIdOfCell :: Cell -> Maybe AntId
-antIdOfCell = view $ cellStateL . antID
+antIdOfCell = _antID . cellState
