@@ -86,7 +86,6 @@ handleInput =
     SingleStep -> do
       state . step .= True
       state . paused .= False
-    _ -> return ()
 
 without :: (Eq a, Foldable t) => [a] -> t a -> [a]
 without values excludes = filter (`notElem` excludes) values
