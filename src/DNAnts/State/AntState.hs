@@ -11,11 +11,6 @@ import DNAnts.Lens
 import DNAnts.Types (Direction, Position)
 import SDL.Vect
 
-data AntId = AntId
-  { teamId :: Int
-  , id :: Int
-  }
-
 -- TODO add comments
 data AntMode
   = Waiting
@@ -60,7 +55,7 @@ data AntState = AntState
   , _nticksNotFed :: Int
   , tickCount :: Int
   , _events :: StateEvents
-  , enemyDir :: Direction
+  , _enemyDir :: Direction
   , _action :: AntAction
   , _mode :: AntMode
   } deriving (Eq)
@@ -83,7 +78,7 @@ defaultAntState =
   , _nticksNotFed = 0
   , tickCount = 0
   , _events = defaultStateEvents
-  , enemyDir = V2 0 0
+  , _enemyDir = V2 0 0
   , _action = DoMove
   , _mode = Scouting
   }

@@ -3,7 +3,7 @@
 module DNAnts.State.CellState where
 
 import Control.Lens
-import DNAnts.State.AntState (AntId)
+import DNAnts.State.AntId (AntId)
 
 type Trace = Int
 
@@ -23,7 +23,7 @@ data CellState = CellState
   { _cellType :: CellType
   , _amount :: Int
   , _taken :: Bool
-  , _antID :: AntId
+  , _antID :: Maybe AntId
   , _tracesIn :: [Traces]
   , _tracesOut :: [Traces]
   }
@@ -35,7 +35,7 @@ defaultCellState =
   { _cellType = Plain
   , _amount = 0
   , _taken = False
-  , _antID = undefined
+  , _antID = Nothing
   , _tracesIn = undefined
   , _tracesOut = undefined
   }

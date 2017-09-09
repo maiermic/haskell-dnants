@@ -6,6 +6,8 @@ import Control.Lens
 import Control.Monad.Trans.State.Lazy (StateT)
 import DNAnts.Lens
 import DNAnts.State.CellState
+import DNAnts.State.AntState
+import DNAnts.State.AntId
 import Lens.Family2.State.Lazy (zoom)
 
 data Cell =
@@ -19,13 +21,13 @@ updateCell = return () -- TODO lower intensity of traces
 cellState :: Cell -> CellState
 cellState (Cell _cellState) = _cellState
 
-cellStateL :: Optic' (->) (Const Bool) Cell CellState
+cellStateL :: (Contravariant f, Profunctor p) => Optic' p f Cell CellState
 cellStateL = to cellState
 
-cellTypeL :: Optic' (->) (Const Bool) Cell CellType
+--cellTypeL :: Optic' (->) (Const Bool) Cell CellType
 cellTypeL = cellStateL . cellType
 
-isCellTypeL :: CellType -> Optic' (->) (Const Bool) Cell Bool
+--isCellTypeL :: CellType -> Optic' (->) (Const Bool) Cell Bool
 isCellTypeL t = cellTypeL . to (== t)
 
 isCellTaken :: Cell -> Bool
@@ -39,3 +41,6 @@ isNotSpawnPoint = cellTypeL ./= SpawnPoint
 
 containsFood :: Optic' (->) (Const Bool) Cell Bool
 containsFood = gtL (cellStateL . numFood) 0
+
+antIdOfCell :: Cell -> Maybe AntId
+antIdOfCell = view $ cellStateL . antID

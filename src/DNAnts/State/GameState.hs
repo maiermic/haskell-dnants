@@ -6,8 +6,11 @@
 
 module DNAnts.State.GameState where
 
+import Control.Monad.Extra
+import Data.Maybe
+import Data.Foldable
 import Control.Lens
-       ((%=), (+=), (-=), (.=), (^?), ix, makeLenses, to, use)
+       ((%=), (+=), (-=), (.=), (^?), ix, makeLenses, to, use, view)
 import Control.Monad (forM_, when)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.State.Lazy (StateT, get)
@@ -15,6 +18,7 @@ import DNAnts.Debug (debugShow)
 import DNAnts.Lens
 import DNAnts.State.Ant as AT
 import DNAnts.State.Ant
+import DNAnts.State.AntId as AI
 import DNAnts.State.AntState
 import DNAnts.State.AntState as AS
 import DNAnts.State.Cell
@@ -54,19 +58,67 @@ updatePopulation = do
   tickCount <- use roundCount
   traverseAntStates %= updateInitAntState tickCount
   zoom traverseAntStates updatePosition
-  use (to gridState) >>= zoom traverseAntStates . updateAction
+  get >>= zoom traverseAntStates . updateAction
 
-updateAction :: Grid -> StateT AntState IO ()
-updateAction grid = do
+updateAction :: GameState -> StateT AntState IO ()
+updateAction gameState = do
   whenL isAlive $ do
-    events . food .=. cellOfAnt grid . isFoodCell
-    -- TODO scan for enemies
+    events . food .=. cellOfAnt (gridState gameState) . isFoodCell
+    scanForEnemies gameState
     -- TODO request next state
     -- TODO apply action
 
+scanForEnemies :: GameState -> StateT AntState IO ()
+scanForEnemies GameState {_gridFront, _populFront} = do
+  AntState {_pos, teamID} <- get
+  whenJust (findAliveAdjEnemy teamID _pos _gridFront _populFront) onEnemy
+
+onEnemy :: Ant -> StateT AntState IO ()
+onEnemy Ant {_state = AntState {_pos = enemyPos}} = do
+  enemyDir .=. AS.pos . to (enemyPos -)
+  events . enemy .= True
+
+findAliveAdjEnemy :: Int -> Position -> Grid -> Population -> Maybe Ant
+findAliveAdjEnemy antTeamId pos grid population =
+  find (view (AT.state . isAlive)) $ adjEnemies antTeamId pos grid population
+
+getTeamById :: Int -> Population -> Maybe AntTeam
+getTeamById i population = find ((== i) . AT.teamID) population
+
+getAntById :: AntId -> Population -> Maybe Ant
+getAntById AntId {_id, _teamId} population =
+  case getTeamById _teamId population of
+    Nothing -> Nothing
+    Just team -> find ((== _id) . AS.id . _state) $ _ants team
+
+adjEnemies :: Int -> Position -> Grid -> Population -> [Ant]
+adjEnemies antTeamId pos grid population =
+  mapMaybe (`getAntById` population) $ adjEnemyIds antTeamId pos grid
+
+adjEnemyIds :: Int -> Position -> Grid -> [AntId]
+adjEnemyIds antTeamId pos grid =
+  filter ((/= antTeamId) . AI._teamId) $ adjAntIds pos grid
+
+adjAntIds :: Position -> Grid -> [AntId]
+adjAntIds pos grid =
+  mapMaybe (antIdOfCell . flip cellAt (_cells grid)) $ adjPositions pos grid
+
+adjPositions :: Position -> Grid -> [Position]
+adjPositions pos grid = filter (`containsPosition` grid) $ map (+ pos) adjDir
+
+{- |
+Directions to adjacent grid positions.
+
+>>> adjDir
+[V2 (-1) (-1),V2 0 (-1),V2 1 (-1),V2 (-1) 0,V2 1 0,V2 (-1) 1,V2 0 1,V2 1 1]
+
+-}
+adjDir :: [Direction]
+adjDir = concat [[V2 x y | x <- [-1 .. 1], V2 x y /= V2 0 0] | y <- [-1 .. 1]]
+
 isFoodCell = isNotSpawnPoint .&&. containsFood
 
-cellOfAnt Grid {_cells} = AS.pos . to (flip cellAt _cells)
+cellOfAnt Grid {_cells} = AS.pos . to (`cellAt` _cells)
 
 traverseAntStates ::
      Applicative f => (AntState -> f AntState) -> GameState -> f GameState
