@@ -4,8 +4,8 @@ module DNAnts.View.Sprites where
 
 import Codec.Picture.Types (Image(Image, imageHeight, imageWidth))
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import Control.Monad.Writer.DNAnts.ResourceM
-       (ResourceM, onReleaseResources)
+import Control.Monad.Trans.Except
+import DNAnts.Defer
 import DNAnts.SVG (SVG, createSurfaceFromSVG, loadSVGImage)
 import qualified SDL
 import SDL.Vect (V2(V2))
@@ -40,7 +40,7 @@ data Sprites = Sprites
   , num9 :: Sprite
   }
 
-loadSprites :: MonadIO m => SDL.Renderer -> ResourceM m Sprites
+loadSprites :: MonadIO m => SDL.Renderer -> ExceptT e (DeferM m) Sprites
 loadSprites renderer = do
   commands <- loadSprite renderer "assets/commands.svg"
   rock <- loadSprite renderer "assets/rock.svg"
@@ -96,7 +96,8 @@ loadSprites renderer = do
     , num9
     }
 
-loadSprite :: MonadIO m => SDL.Renderer -> FilePath -> ResourceM m Sprite
+loadSprite ::
+     MonadIO m => SDL.Renderer -> FilePath -> ExceptT e (DeferM m) Sprite
 loadSprite renderer filePath = do
   image@Image {imageWidth, imageHeight} <- liftIO $ loadSVGImage filePath
   surface <-
@@ -106,5 +107,5 @@ loadSprite renderer filePath = do
       (V2 (fromIntegral imageWidth) (fromIntegral imageHeight))
   texture <- liftIO $ SDL.createTextureFromSurface renderer surface
   liftIO $ SDL.freeSurface surface
-  onReleaseResources $ SDL.destroyTexture texture
+  deferE $ SDL.destroyTexture texture
   return texture

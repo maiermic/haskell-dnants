@@ -15,10 +15,10 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:   Control.Monad.Writer.DNAnts.ResourceM
-                     , DNAnts.AppEngine
+  exposed-modules:     DNAnts.AppEngine
                      , DNAnts.Client
                      , DNAnts.Debug
+                     , DNAnts.Defer
                      , DNAnts.Lens
                      , DNAnts.State.AppPlayState
                      , DNAnts.State.Ant
@@ -38,6 +38,7 @@ library
                      , DNAnts.View.Sprites
   build-depends:       base >= 4.7 && < 5
                      , JuicyPixels >= 3.2.8.2  && < 4.0
+                     , safe-exceptions >= 0.1.6.0 && < 0.2.0.0
                      , extra >= 1.5.3 && < 2
                      , lens >= 4.15.4 && < 5
                      , lens-family >= 1.2.1 && < 2

@@ -4,8 +4,8 @@ module DNAnts.View.Window where
 
 import Control.Exception (finally)
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import Control.Monad.Writer.DNAnts.ResourceM
-       (ResourceM, onReleaseResources)
+import Control.Monad.Trans.Except
+import DNAnts.Defer
 import Data.Text (Text)
 import Foreign.C.Types (CInt)
 import qualified SDL
@@ -16,7 +16,7 @@ data Window = Window
   , renderer :: SDL.Renderer
   }
 
-getWindow :: MonadIO m => Text -> CInt -> CInt -> ResourceM m SDL.Window
+getWindow :: MonadIO m => Text -> CInt -> CInt -> ExceptT e (DeferM m) SDL.Window
 getWindow title width height = do
   window <-
     liftIO $
@@ -26,10 +26,10 @@ getWindow title width height = do
       { SDL.windowPosition = SDL.Centered
       , SDL.windowInitialSize = V2 width height
       }
-  onReleaseResources $ SDL.destroyWindow window
+  deferE $ SDL.destroyWindow window
   return window
 
-getRenderer :: MonadIO m => SDL.Window -> ResourceM m SDL.Renderer
+getRenderer :: MonadIO m => SDL.Window -> ExceptT e (DeferM m) SDL.Renderer
 getRenderer window = do
   renderer <-
     liftIO $
@@ -40,5 +40,5 @@ getRenderer window = do
       { SDL.rendererType = SDL.AcceleratedVSyncRenderer
       , SDL.rendererTargetTexture = True
       }
-  onReleaseResources $ SDL.destroyRenderer renderer
+  deferE $ SDL.destroyRenderer renderer
   return renderer

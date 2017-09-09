@@ -14,8 +14,9 @@ import Control.Monad (Monad, mapM_, unless, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Trans.State.Lazy
        (StateT(StateT), execStateT, get, put)
-import Control.Monad.Writer.DNAnts.ResourceM
-       (ResourceM, onReleaseResources, runResourceM)
+import Control.Monad.Trans.Except
+import DNAnts.Defer
+import Control.Exception.Safe
 import DNAnts.Debug
 import DNAnts.Lens
        ((.=.), (.=>), (.=>>), (<~%), getsM, unlessL, whenL)
@@ -116,9 +117,10 @@ runApp title _settings@AppSettings {gridExtents, gridSpacing} =
   let (V2 gridWidth gridHeight) = gridExtents
       windowWidth = fromIntegral (gridWidth * gridSpacing)
       windowHeight = fromIntegral (gridHeight * gridSpacing)
-  in runResourceM $ do
+  in do
+      result <- runDefer $ runExceptT $ do
        liftIO $ SDL.initialize [SDL.InitVideo]
-       onReleaseResources SDL.quit
+       deferE SDL.quit
        _window <- getWindow (pack title) windowWidth windowHeight
        renderer <- getRenderer _window
        sprites <- loadSprites renderer
@@ -133,6 +135,13 @@ runApp title _settings@AppSettings {gridExtents, gridSpacing} =
            , _isRunning = True
            }
        return ()
+      handleResult result
+
+handleResult :: Show a => Either SomeException a -> IO ()
+handleResult result =
+  case result of
+    Left e -> putStrLn $ "caught an exception " ++ show e
+    Right _ -> putStrLn "clean shutdown"
 
 drawFrame :: AppEngine -> IO ()
 drawFrame AppEngine {_settings, _window, _state} = do
