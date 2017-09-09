@@ -16,13 +16,12 @@ import Control.Monad.Trans.State
 import DNAnts.State.Ant
 import DNAnts.State.Cell (Cell(Cell), defaultCell)
 import DNAnts.State.CellState
-       (CellType(Barrier, Food, Plain, SpawnPoint), _cellType,
-        defaultCellState)
 import DNAnts.State.Grid
        (Grid(Grid, _cells, _extents), defaultGrid)
 import qualified DNAnts.State.Grid as G
 import DNAnts.State.Population (Population)
-import DNAnts.Types (Extents, Region, defaultExtents, divA, rect, uncurryV2)
+import DNAnts.Types
+       (Extents, Region, defaultExtents, divA, rect, uncurryV2)
 import Data.List.Split (chunksOf)
 
 -- TODO only use explicit imports
@@ -82,7 +81,15 @@ generateGrid config@MapConfig {extents = _extents} = do
   return Grid {_cells, _extents}
 
 cellOfType :: CellType -> Cell
-cellOfType _cellType = Cell defaultCellState {_cellType}
+cellOfType _cellType =
+  Cell
+    defaultCellState
+    { _cellType
+    , _amount =
+        if _cellType == Food
+          then 8
+          else 0
+    }
 
 generateGridCells :: MonadIO m => MapConfig -> StateT (GridCells Cell) m ()
 generateGridCells MapConfig { extents

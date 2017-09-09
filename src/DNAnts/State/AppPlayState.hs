@@ -162,10 +162,7 @@ renderFoodCell settings window sprites pos cellState =
           1 -> sugah1 sprites
           2 -> sugah2 sprites
           3 -> sugah3 sprites
-          4 -> sugah4 sprites
-          _ ->
-            error $
-            "amountQurt is not a value between 1 and 4: " ++ show amountQurt
+          _ -> sugah4 sprites
   in when (amountQurt > 0) $ do
     renderCell settings window sprite pos
 
