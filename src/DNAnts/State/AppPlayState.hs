@@ -6,9 +6,9 @@
 
 module DNAnts.State.AppPlayState where
 
-import Control.Monad.IO.Class (MonadIO, liftIO)
-import Control.Monad (when)
 import Control.Lens
+import Control.Monad (when)
+import Control.Monad.IO.Class (MonadIO, liftIO)
 import DNAnts.Debug
 import DNAnts.State.Ant hiding (teamSize)
 import DNAnts.State.AntState
@@ -30,12 +30,13 @@ import DNAnts.State.Map
                   numTeams, symmetric, teamSize),
         defaultMapConfig, generateMap)
 import DNAnts.State.Population (Population)
+import DNAnts.Types as AS
 import DNAnts.Types
        (AppSettings(AppSettings, _framesPerSecond, gridExtents,
                     gridSpacing, initTeamSize, numTeams),
         Color, Extents, Position, divA, rect, rgb, rgba, toColor3)
 import DNAnts.Types.Orientation
-       (Orientation, directionOfOrientation, noOrientation)
+       (Orientation, directionOfOrientation, noOrientation, or2deg, dir2or)
 import qualified DNAnts.Types.Orientation as Orientation
 import DNAnts.View.Sprites
 import DNAnts.View.Window (Window(Window, renderer, window))
@@ -168,16 +169,32 @@ renderFoodCell settings window sprites pos cellState =
           2 -> sugah2 sprites
           3 -> sugah3 sprites
           _ -> sugah4 sprites
-  in when (amountQurt > 0) $ do
-    renderCell settings window sprite pos
+  in when (amountQurt > 0) $ do renderCell settings window sprite pos
 
 renderCell :: AppSettings -> Window -> Sprite -> Position -> IO ()
-renderCell AppSettings {gridSpacing} Window {renderer} texture (V2 cellX cellY) = do
-  let size = (fromIntegral gridSpacing) :: CInt
-      dstRect =
-        rect (fromIntegral cellX * size) (fromIntegral cellY * size) size size
+renderCell AppSettings {gridSpacing} window texture cellPos =
+  let size = gridSpacing
+  in renderTexture window texture ((* gridSpacing) <$> cellPos) (V2 size size)
+
+renderTexture :: Window -> Sprite -> Position -> Extents -> IO ()
+renderTexture Window {renderer} texture (V2 x y) (V2 w h) = do
+  let dstRect =
+        rect (fromIntegral x) (fromIntegral y) (fromIntegral w) (fromIntegral h)
   SDL.rendererDrawBlendMode renderer $= SDL.BlendMod
   SDL.copy renderer texture Nothing (Just dstRect)
+
+renderCellWithOrientation :: AppSettings -> Window -> Sprite -> Position -> Orientation -> IO ()
+renderCellWithOrientation AppSettings {gridSpacing} window texture cellPos orientation =
+  let size = gridSpacing
+  in renderTextureWithOrientation window texture ((* gridSpacing) <$> cellPos) (V2 size size) orientation
+
+renderTextureWithOrientation :: Window -> Sprite -> Position -> Extents -> Orientation -> IO ()
+renderTextureWithOrientation Window {renderer} texture (V2 x y) (V2 w h) orientation = do
+  let dstRect =
+        rect (fromIntegral x) (fromIntegral y) (fromIntegral w) (fromIntegral h)
+      angle = or2deg orientation
+  SDL.rendererDrawBlendMode renderer $= SDL.BlendMod
+  SDL.copyEx renderer texture Nothing (Just dstRect) angle Nothing (V2 False False)
 
 renderObjects :: AppSettings -> Window -> AppPlayState -> IO ()
 renderObjects settings@AppSettings {gridSpacing} window AppPlayState { _gameState
@@ -246,7 +263,27 @@ toLineSegment points = zip points $ tail points
 renderAnt :: AppSettings -> Window -> Sprites -> Color -> Ant -> IO ()
 renderAnt settings window sprites color Ant {_state} =
   when (_state ^. isAlive) $ do
-    let texture = ant1 sprites
-    SDL.textureColorMod texture $= toColor3 color
-    renderCell settings window texture (_pos _state)
-    -- TODO render ant depending on state
+    let p = _pos _state
+    when (_attacked $ _events _state) $
+      renderCell settings window (evtAttacked sprites) p
+    when (_enemy $ _events _state) $
+      renderCell settings window (evtEnemy sprites) p
+    when (_strength _state > 0) $ do
+      let strengthQurt =
+            (((_strength _state * 100) `div` antMaxStrength) `div` 25) + 1
+          antSprite = case strengthQurt of
+            1 -> ant1 sprites
+            2 -> ant2 sprites
+            3 -> ant3 sprites
+            _ -> ant4 sprites
+      SDL.textureColorMod antSprite $= toColor3 color
+      renderCellWithOrientation settings window antSprite p $ dir2or $ _dir _state
+    when (_state ^. isCarrying) $
+      let gsp = AS.gridSpacing settings
+          size = gsp
+          center = (* gsp) <$> p
+          mouthOffset = (* (gsp `div` 4)) <$> _dir _state
+          carryingPos = center + mouthOffset
+      in renderTexture window (sugah2 sprites) carryingPos (V2 size size)
+    when (DoAttack == _action _state) $
+      renderCell settings window (actAttack sprites) p

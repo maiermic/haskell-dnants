@@ -115,3 +115,6 @@ isHomeCell = dist .== V2 0 0
 switchMode :: Monad m => AntMode -> StateT AntState m ()
 switchMode m =
   whenL isAlive $ mode .= m
+
+antMaxStrength :: Int
+antMaxStrength = 10

@@ -6,6 +6,7 @@
 
 module DNAnts.Types.Orientation where
 
+import Foreign.C.Types (CDouble)
 import DNAnts.Types
 import Data.List (elemIndex, lookup)
 import Data.Maybe (fromMaybe)
@@ -99,6 +100,21 @@ or2dir = directionOfOrientation
 
 int2or :: Int -> Orientation
 int2or i = fromMaybe noOrientation $ lookup i (map swap orientationTable)
+
+or2deg :: Orientation -> CDouble
+or2deg o = fromMaybe 0.0 $ lookup o degreeTable
+
+degreeTable :: [(Orientation, CDouble)]
+degreeTable =
+  [ (north, 0)
+  , (northEast, 45)
+  , (east, 90)
+  , (southEast, 135)
+  , (south, 180)
+  , (southWest, 225)
+  , (west, 270)
+  , (northWest, 315)
+  ]
 
 clampOrientation :: Int -> Int
 clampOrientation o =
