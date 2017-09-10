@@ -387,11 +387,13 @@ greedyClient = do
            if _numCarrying < _strength
              then action .= DoHarvest
              else do
+               dir .= - (signum <$> _dist)
                mode .= Homing
                action .= DoMove
          | otherwise ->
            if _numCarrying > 0
              then do
+               dir .= - (signum <$> _dist)
                mode .= Homing
                action .= DoMove
              else do
