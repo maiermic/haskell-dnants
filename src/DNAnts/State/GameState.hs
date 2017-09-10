@@ -1,3 +1,5 @@
+{-# LANGUAGE MultiWayIf #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE DisambiguateRecordFields #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE NamedFieldPuns #-}
@@ -6,17 +8,16 @@
 
 module DNAnts.State.GameState where
 
-import Control.Monad.Trans.Class (lift, MonadTrans)
-import Control.Monad.Extra
-import DNAnts.Client
-import Data.Maybe
-import Data.Foldable
-import Control.Lens.Traversal
 import Control.Lens
-       ((<>=), (%=), (+=), (-=), (.=), (^?), ix, makeLenses, to, use, view, Contravariant, Profunctor, Optic', LensLike', preuse)
+       (Contravariant, LensLike', Optic', Profunctor, (%=), (+=), (-=),
+        (.=), (<>=), (^?), ix, makeLenses, preuse, to, use, view)
+import Control.Lens.Traversal
 import Control.Monad (forM_, when)
-import Control.Monad.IO.Class (liftIO, MonadIO)
-import Control.Monad.Trans.State.Lazy (StateT, get, execStateT)
+import Control.Monad.Extra
+import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad.Trans.Class (MonadTrans, lift)
+import Control.Monad.Trans.State.Lazy (StateT, execStateT, get)
+import DNAnts.Client
 import DNAnts.Debug (debugShow)
 import DNAnts.Lens
 import DNAnts.State.Ant as AT -- TODO move AntTeam to own module
@@ -32,8 +33,11 @@ import DNAnts.State.Map
 import DNAnts.State.Population (Population)
 import DNAnts.Types
 import DNAnts.Types.Orientation
+import Data.Foldable
+import Data.Maybe
 import Lens.Family2.State.Lazy (zoom)
 import SDL.Vect (V2(V2))
+import System.Random
 
 data GameState = GameState
   { appSettings :: AppSettings
@@ -97,10 +101,11 @@ traverseAntStatesNested fn =
   populFront <<~% do zoom ants $ Prelude.id <<~% zoom AT.state fn
 
 type NestedAntState' m a = StateT AntState (StateT [Ant] (StateT GameState m)) a
+
 type NestedAntState m = NestedAntState' m ()
 
-liftGameState :: (Monad (t m), Monad m, MonadTrans t, MonadTrans t1) =>
-     m a -> t1 (t m) a
+liftGameState ::
+     (Monad (t m), Monad m, MonadTrans t, MonadTrans t1) => m a -> t1 (t m) a
 liftGameState = lift . lift
 
 -- TODO refactor
@@ -122,7 +127,7 @@ dropFoodNL dropAmount = do
   p <- use AS.pos
   liftGameState $ gridCellStateL p . CS.numFood -= dropAmount
 
-gridCellStateL ::  Applicative f => Position -> LensLike' f GameState CellState
+gridCellStateL :: Applicative f => Position -> LensLike' f GameState CellState
 gridCellStateL (V2 x y) = gridFront . cells . cellAtL x y . cellStateL
 
 updateAction :: MonadIO m => NestedAntState m
@@ -140,8 +145,8 @@ updateReaction =
     AntState {_damage, _numCarrying, _strength} <- get
     when (_strength <= _damage) $ do
       if _strength > 1
-      then strength .= max 0 (_strength - _damage `div` _strength)
-      else dieNL
+        then strength .= max 0 (_strength - _damage `div` _strength)
+        else dieNL
       when (_numCarrying > 0) $ do
         dropFoodNL _numCarrying
         numCarrying .= 0
@@ -160,7 +165,6 @@ eat = do
   when (consumed > 0) $ do
     nticksNotFed .= 0
     strength %= \s -> min 10 (s + consumed)
-
 
 harvest :: Monad m => NestedAntState m
 harvest =
@@ -271,16 +275,17 @@ updatePosition = do
       _ -> action .= DoIdle
 
 move :: MonadIO m => NestedAntState m
-move = whenL (isAlive .&&. hasDir) $ do
-  pos' <- use nextPos
-  gameState <- liftGameState get
-  if allowsMoveTo pos' (gridState gameState)
-  then do
-    events . collision .= False
-    dist .+=. dir
+move =
+  whenL (isAlive .&&. hasDir) $ do
+    pos' <- use nextPos
+    gameState <- liftGameState get
+    if allowsMoveTo pos' (gridState gameState)
+      then do
+        events . collision .= False
+        dist .+=. dir
     -- TODO leave and enter cell
-    AS.pos .= pos'
-  else onCollision
+        AS.pos .= pos'
+      else onCollision
 
 turnDir :: MonadIO m => Int -> StateT AntState m ()
 turnDir 0 = return ()
@@ -294,7 +299,7 @@ onCollision = events . collision .= True
 
 -- TODO solve cyclic import to be able to move this to client
 updateAntState :: MonadIO m => NestedAntState m
-updateAntState = simpleClient
+updateAntState = greedyClient
 
 simpleClient :: MonadIO m => NestedAntState m
 simpleClient = do
@@ -311,4 +316,95 @@ simpleClient = do
     Eating -> eat
     Harvesting -> harvest
     Homing -> move
+    _ -> return ()
+
+randomTurn :: MonadIO m => NestedAntState m
+randomTurn = do
+  AntState {..} <- get
+  whenL (dir .== V2 0 0) $ dir .= V2 0 1
+  let r1 = (tickCount - (id * 3)) `mod` 4 < 2
+      r2 = (tickCount + id) `mod` 8 < 6
+  turnDir $
+    if | r1 && r2 -> (-2)
+       | r1 -> 2
+       | r2 -> -1
+       | otherwise -> 1
+
+greedyClient :: MonadIO m => NestedAntState m
+greedyClient = do
+  rand <- liftIO $ randomRIO (0, 5)
+  AntState {..} <- get
+  grid <- liftGameState $ use $ to gridState
+  let StateEvents {..} = _events
+  let isFoodInDirection :: Direction -> Bool
+      isFoodInDirection d =
+        let cellPos = d + _pos
+        in if containsPosition cellPos grid
+           then view containsFood $ cellAt cellPos $ _cells grid
+           else False
+      foodDir =
+        fromMaybe _dir $
+        find isFoodInDirection adjDir
+  case _mode of
+    Scouting ->
+      if | _enemy ->
+           do dir .= _enemyDir
+              attack
+         | _collision ->
+           do turnDir 1
+              move
+         | _food ->
+           if _strength < 5
+             then do
+               eat
+               mode .= Eating
+             else do
+               harvest
+               mode .= Harvesting
+         | foodDir /= (V2 0 0) ->
+           do dir .= foodDir
+              move
+         | tickCount - lastDirChange > 7 ->
+           do turnDir $ ((rand + tickCount) `mod` 3) - 1
+              move
+         | otherwise -> return ()
+    Eating ->
+      if | _enemy ->
+           do dir .= _enemyDir
+              attack
+         | _food ->
+           if _strength >= 5
+             then do
+               harvest
+               mode .= Harvesting
+             else eat
+         | otherwise ->
+           do mode .= Scouting
+              move
+    Harvesting ->
+      if | _food ->
+           if _numCarrying < _strength
+             then harvest
+             else do
+               mode .= Homing
+               move
+         | otherwise ->
+           if _numCarrying > 0
+             then do
+               mode .= Homing
+               move
+             else do
+               mode .= Scouting
+               move
+    Homing ->
+      if | _collision ->
+           do turnDir 1
+              move
+         | _numCarrying == 0 ->
+           do mode .= Scouting
+              randomTurn
+              move
+         | otherwise ->
+           do dir .= (signum <$> _dist)
+              move
     _ -> return ()
