@@ -36,7 +36,7 @@ data StateEvents = StateEvents
   , _attacked :: Bool
   , _food :: Bool
   , _enemy :: Bool
-  } deriving (Eq)
+  } deriving (Eq, Show)
 
 defaultStateEvents =
   StateEvents
@@ -58,7 +58,7 @@ data AntState = AntState
   , _enemyDir :: Direction
   , _action :: AntAction
   , _mode :: AntMode
-  } deriving (Eq)
+  } deriving (Eq, Show)
 
 makeLenses ''StateEvents
 

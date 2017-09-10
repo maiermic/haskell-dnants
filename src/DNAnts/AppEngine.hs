@@ -55,6 +55,7 @@ handleEvents = do
   events <- liftIO $ map SDL.eventPayload <$> SDL.pollEvents
   when (SDL.QuitEvent `elem` events) $ isRunning .= False
   handleKeyboardEvents events
+  -- TODO mark cell on mouse button down
 
 handleKeyboardEvents :: [SDL.EventPayload] -> StateT AppEngine IO ()
 handleKeyboardEvents events =

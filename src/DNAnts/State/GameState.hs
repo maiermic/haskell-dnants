@@ -333,7 +333,7 @@ randomTurn = do
 greedyClient :: MonadIO m => NestedAntState m
 greedyClient = do
   rand <- liftIO $ randomRIO (0, 5)
-  AntState {..} <- get
+  antState@AntState {..} <- get
   grid <- liftGameState $ use $ to gridState
   let StateEvents {..} = _events
   let isFoodInDirection :: Direction -> Bool
@@ -345,6 +345,7 @@ greedyClient = do
       foodDir =
         fromMaybe _dir $
         find isFoodInDirection adjDir
+  liftIO $ putStrLn $ "foodDir = " ++ show foodDir ++ ", " ++ show antState
   case _mode of
     Scouting ->
       if | _enemy ->

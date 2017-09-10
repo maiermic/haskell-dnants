@@ -141,6 +141,10 @@ draw settings window@Window {renderer} state = do
   SDL.rendererDrawBlendMode renderer $= SDL.BlendMod
   renderMap settings window state
   renderObjects settings window state
+  -- TODO show grid
+  -- TODO render highlight cell
+  -- TODO render statusbar
+  -- TODO render commands overlay
   SDL.present renderer
 
 renderMap :: AppSettings -> Window -> AppPlayState -> IO ()
@@ -150,6 +154,7 @@ renderMap settings window AppPlayState {_gameState, sprites} =
       Barrier -> renderCell settings window (rock sprites) pos
       Food -> renderFoodCell settings window sprites pos cellState
       _ -> mempty
+    -- TODO show traces
 
 renderFoodCell ::
      AppSettings -> Window -> Sprites -> Position -> CellState -> IO ()
@@ -245,3 +250,4 @@ renderAnt settings window sprites color Ant {_state}
   let texture = ant1 sprites
   SDL.textureColorMod texture $= toColor3 color
   renderCell settings window texture (_pos _state)
+  -- TODO render ant depending on state
