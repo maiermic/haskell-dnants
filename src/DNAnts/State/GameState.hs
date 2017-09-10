@@ -350,62 +350,62 @@ greedyClient = do
     Scouting ->
       if | _enemy ->
            do dir .= _enemyDir
-              attack
+              action .= DoAttack
          | _collision ->
            do turnDir 1
-              move
+              action .= DoMove
          | _food ->
            if _strength < 5
              then do
-               eat
+               action .= DoEat
                mode .= Eating
              else do
-               harvest
+               action .= DoHarvest
                mode .= Harvesting
          | foodDir /= (V2 0 0) ->
            do dir .= foodDir
-              move
+              action .= DoMove
          | tickCount - lastDirChange > 7 ->
            do turnDir $ ((rand + tickCount) `mod` 3) - 1
-              move
+              action .= DoMove
          | otherwise -> return ()
     Eating ->
       if | _enemy ->
            do dir .= _enemyDir
-              attack
+              action .= DoAttack
          | _food ->
            if _strength >= 5
              then do
-               harvest
+               action .= DoHarvest
                mode .= Harvesting
-             else eat
+             else action .= DoEat
          | otherwise ->
            do mode .= Scouting
-              move
+              action .= DoMove
     Harvesting ->
       if | _food ->
            if _numCarrying < _strength
-             then harvest
+             then action .= DoHarvest
              else do
                mode .= Homing
-               move
+               action .= DoMove
          | otherwise ->
            if _numCarrying > 0
              then do
                mode .= Homing
-               move
+               action .= DoMove
              else do
                mode .= Scouting
-               move
+               action .= DoMove
     Homing ->
       if | _collision ->
            do turnDir 1
-              move
+              action .= DoMove
          | _numCarrying == 0 ->
            do mode .= Scouting
               randomTurn
-              move
+              action .= DoMove
          | otherwise ->
-           do dir .= (signum <$> _dist)
-              move
+           do dir .= - (signum <$> _dist)
+              action .= DoMove
     _ -> return ()
