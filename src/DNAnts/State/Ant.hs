@@ -5,7 +5,8 @@
 
 module DNAnts.State.Ant where
 
-import Control.Lens (makeLenses)
+import Control.Lens ((+=), makeLenses)
+import Control.Monad.Trans.State.Lazy (StateT)
 import DNAnts.Client (Client)
 import DNAnts.State.AntState
 import DNAnts.State.AntState as AS
@@ -27,8 +28,12 @@ data AntTeam = AntTeam
   }
 
 makeLenses ''Ant
+
 makeLenses ''AntTeam
 
 createAnt :: AntTeam -> Int -> V2 Int -> Ant
 createAnt team@AntTeam {teamID} id _pos =
   Ant {team, _state = defaultAntState {AS.id = id, teamID, _pos, _strength = 5}}
+
+storeFood :: Monad m => Int -> StateT AntTeam m ()
+storeFood food = numFood += food

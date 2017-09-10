@@ -108,3 +108,10 @@ isCarrying = numCarrying `gtL` 0
 
 canAttack :: Optic' (->) (Const Bool) AntState Bool
 canAttack = isCarrying . to not .&&. hasDir
+
+isHomeCell :: Optic' (->) (Const Bool) AntState Bool
+isHomeCell = dist .== V2 0 0
+
+switchMode :: Monad m => AntMode -> StateT AntState m ()
+switchMode m =
+  whenL isAlive $ mode .= m

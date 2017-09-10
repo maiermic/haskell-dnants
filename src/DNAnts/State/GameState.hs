@@ -77,6 +77,7 @@ updatePopulation = do
   traverseAntStatesNested updateAction
   handleAttacks
   traverseAntStatesNested updateReaction
+  preuse (populFront . to head . AT.numFood) >>= liftIO . putStrLn . ("AT.numFood: " ++) . show
 
 handleAttacks :: StateT GameState IO ()
 handleAttacks = do
@@ -95,18 +96,21 @@ traverseAntStates = populFront . traverse . ants . traverse . AT.state
 
 traverseAntStatesNested ::
      Monad m
-  => StateT AntState (StateT [Ant] (StateT GameState m)) ()
+  => NestedAntState m
   -> StateT GameState m ()
 traverseAntStatesNested fn =
-  populFront <<~% do zoom ants $ Prelude.id <<~% zoom AT.state fn
+  populFront <<~% ants <<~% zoom AT.state fn
 
-type NestedAntState' m a = StateT AntState (StateT [Ant] (StateT GameState m)) a
+type NestedAntState' m a = StateT AntState (StateT AntTeam (StateT GameState m)) a
 
 type NestedAntState m = NestedAntState' m ()
 
 liftGameState ::
      (Monad (t m), Monad m, MonadTrans t, MonadTrans t1) => m a -> t1 (t m) a
 liftGameState = lift . lift
+
+liftAntTeam :: (Monad m, MonadTrans t) => m a -> t m a
+liftAntTeam = lift
 
 -- TODO refactor
 takeFoodNL :: Monad m => NestedAntState' m Int
@@ -283,9 +287,55 @@ move =
       then do
         events . collision .= False
         dist .+=. dir
-    -- TODO leave and enter cell
+        leaveCurrentCell
+        enterNextCell
         AS.pos .= pos'
       else onCollision
+
+enterNextCell :: MonadIO m => NestedAntState m
+enterNextCell = do
+  isAlive' <- use isAlive
+  if not isAlive'
+    then nextCellNL $ do
+           taken .= False
+           CS.antID .= Nothing
+    else do
+      AntState {id, teamID} <- get
+      nextCellNL $ do
+        taken .= True
+        CS.antID .= (Just $ AntId {_teamId = teamID, _id = id})
+    -- TODO add in trace
+    -- TODO refactor
+      Just CellState {_amount, _cellType} <-
+        use AS.nextPos >>= \p -> liftGameState $ preuse $ gridCellStateL p
+      when (_amount > 0) onFoodCell
+      when (_cellType == SpawnPoint) onHomeCell
+
+onFoodCell :: MonadIO m => NestedAntState m
+onFoodCell = events . food .= True
+
+onHomeCell :: MonadIO m => NestedAntState m
+onHomeCell =
+  whenL isHomeCell $ do
+    food <- use numCarrying
+    numCarrying .= 0
+    liftAntTeam $ AT.storeFood food
+    switchMode Scouting
+
+nextCellNL :: MonadIO m => StateT CellState m () -> NestedAntState m
+nextCellNL fn =
+  use AS.nextPos >>= \p -> liftGameState $ zoom (gridCellStateL p) fn
+
+currentCellNL :: MonadIO m => StateT CellState m () -> NestedAntState m
+currentCellNL fn =
+  use AS.pos >>= \p -> liftGameState $ zoom (gridCellStateL p) fn
+
+leaveCurrentCell :: MonadIO m => NestedAntState m
+leaveCurrentCell =
+  currentCellNL $ do
+    taken .= False
+    CS.antID .= Nothing
+  -- TODO add out trace
 
 turnDir :: MonadIO m => Int -> StateT AntState m ()
 turnDir 0 = return ()
