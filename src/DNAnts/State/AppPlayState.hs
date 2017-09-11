@@ -169,7 +169,7 @@ renderFoodCell settings window sprites pos cellState =
           2 -> sugah2 sprites
           3 -> sugah3 sprites
           _ -> sugah4 sprites
-  in when (amountQurt > 0) $ do renderCell settings window sprite pos
+  in when (amountLeft > 0 && amountQurt > 0) $ renderCell settings window sprite pos
 
 renderCell :: AppSettings -> Window -> Sprite -> Position -> IO ()
 renderCell AppSettings {gridSpacing} window texture cellPos =
