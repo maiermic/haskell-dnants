@@ -4,7 +4,7 @@ import Control.Monad (when)
 import DNAnts.AppEngine (runApp)
 import DNAnts.Types
        (AppSettings(AppSettings, _framesPerSecond, gridExtents,
-                    gridSpacing, initTeamSize, numTeams, _roundsPerSecond, _showGrid,
+                    _gridSpacing, initTeamSize, numTeams, _roundsPerSecond, _showGrid,
                     _showTraces, teamCodes, traceRounds))
 import System.Console.GetOpt
        (ArgDescr(NoArg, OptArg, ReqArg), ArgOrder(RequireOrder),
@@ -16,7 +16,7 @@ defaultAppSettings :: AppSettings
 defaultAppSettings =
   AppSettings
   { gridExtents = V2 23 23
-  , gridSpacing = 32
+  , _gridSpacing = 32
   , _framesPerSecond = 30
   , _roundsPerSecond = 4
   , traceRounds = 300
@@ -81,7 +81,7 @@ options =
   , Option
       "b"
       ["big"]
-      (NoArg (\settings -> return settings {gridSpacing = 32}))
+      (NoArg (\settings -> return settings {_gridSpacing = 32}))
       "Show big grid"
   ]
 

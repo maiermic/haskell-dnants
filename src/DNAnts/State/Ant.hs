@@ -16,7 +16,7 @@ import SDL.Vect (V2)
 data Ant = Ant
   { team :: AntTeam
   , _state :: AntState
-  }
+  } deriving Show
 
 data AntTeam = AntTeam
   { teamID :: Int
@@ -26,6 +26,9 @@ data AntTeam = AntTeam
   , _spawnPoints :: [V2 Int]
   , _numFood :: Int
   }
+
+instance Show AntTeam where
+  show AntTeam {teamID} = "AntTeam " ++ show teamID
 
 makeLenses ''Ant
 

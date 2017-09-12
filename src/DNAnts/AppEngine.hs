@@ -7,7 +7,7 @@
 
 module DNAnts.AppEngine where
 
-import Control.Lens (makeLenses, to, use, (%=))
+import Control.Lens (makeLenses, to, preuse, use, (%=))
 import Control.Lens.Operators
 import Control.Lens.Traversal
 import Control.Monad (Monad, mapM_, unless, when)
@@ -21,13 +21,17 @@ import DNAnts.Debug
 import DNAnts.Lens
        ((.=.), (.=>), (.=>>), (<~%), getsM, unlessL, whenL)
 import DNAnts.State.AppPlayState
+import DNAnts.State.AppPlayState as APS
+import DNAnts.State.CellState as CS
+import DNAnts.State.AntId
 import DNAnts.State.GameState
 import DNAnts.State.Input
 import DNAnts.Types
        (AppSettings(AppSettings, _framesPerSecond, _roundsPerSecond,
-                    gridExtents, gridSpacing),
+                    gridExtents, _gridSpacing),
         framesPerSecond, maySpeedDown, maySpeedUp, rgb, roundsPerSecond,
-        showGrid, showTraces)
+        showGrid, showTraces, Position, gridSpacing)
+import DNAnts.Types as AS
 import DNAnts.View.Sprites (loadSprites)
 import DNAnts.View.Window
        (Window(Window, renderer, window), getRenderer, getWindow)
@@ -55,7 +59,13 @@ handleEvents = do
   events <- liftIO $ map SDL.eventPayload <$> SDL.pollEvents
   when (SDL.QuitEvent `elem` events) $ isRunning .= False
   handleKeyboardEvents events
+  handleMouseEvents events
   -- TODO mark cell on mouse button down
+
+handleMouseEvents :: [SDL.EventPayload] -> StateT AppEngine IO ()
+handleMouseEvents events =
+  mapM_ handleInput $ mapMaybe inputFromMouseEvent $
+  mapMaybe toMouseButtonEventData events
 
 handleKeyboardEvents :: [SDL.EventPayload] -> StateT AppEngine IO ()
 handleKeyboardEvents events =
@@ -87,6 +97,32 @@ handleInput =
     SingleStep -> do
       state . step .= True
       state . paused .= False
+    ShowDebugInfoOfPosition pos -> showDebugInfoOfPosition pos
+
+showDebugInfoOfPosition :: Position -> StateT AppEngine IO ()
+showDebugInfoOfPosition pos =
+  whenL (state . paused) $ do
+    gridSpacing <- use (settings . AS.gridSpacing)
+    let clickedCellPos = (`div` gridSpacing) <$> pos
+    liftIO $ putStrLn $ "clicked grid at " ++ show clickedCellPos
+    state . markedCell .= clickedCellPos
+    logCell clickedCellPos
+
+logCell :: Position -> StateT AppEngine IO ()
+logCell pos@(V2 x y) = do
+  cellStateM <- preuse $ state . gameState . gridCellStateL pos
+  case cellStateM of
+    Nothing ->
+      liftIO $ putStrLn $ "cell at postition " ++ show pos ++ " not found"
+    Just cellState -> do
+      liftIO $ putStrLn $ show cellState
+      case CS._antID cellState of
+        Nothing -> return ()
+        Just antId -> do
+          ant <- use $ state . gameState . populFront . to (getAntById antId)
+          liftIO $ putStrLn $ show ant
+
+  return ()
 
 without :: (Eq a, Foldable t) => [a] -> t a -> [a]
 without values excludes = filter (`notElem` excludes) values
@@ -113,10 +149,10 @@ gameLoop = do
     gameLoop
 
 runApp :: String -> AppSettings -> IO ()
-runApp title _settings@AppSettings {gridExtents, gridSpacing} =
+runApp title _settings@AppSettings {gridExtents, _gridSpacing} =
   let (V2 gridWidth gridHeight) = gridExtents
-      windowWidth = fromIntegral (gridWidth * gridSpacing)
-      windowHeight = fromIntegral (gridHeight * gridSpacing)
+      windowWidth = fromIntegral (gridWidth * _gridSpacing)
+      windowHeight = fromIntegral (gridHeight * _gridSpacing)
   in do
       result <- runDefer $ runExceptT $ do
        liftIO $ SDL.initialize [SDL.InitVideo]

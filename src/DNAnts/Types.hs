@@ -40,7 +40,7 @@ toColor3 (V4 r g b a) = V3 r g b
 
 data AppSettings = AppSettings
   { gridExtents :: Extents
-  , gridSpacing :: Int
+  , _gridSpacing :: Int
   , _framesPerSecond :: Int
   , _roundsPerSecond :: Int
   , traceRounds :: Int

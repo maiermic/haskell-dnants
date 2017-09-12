@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
 module DNAnts.State.CellState where
 
@@ -17,7 +18,7 @@ data CellType
   | Grass
   | Water
   | Food
-  deriving Eq
+  deriving (Eq, Show)
 
 data CellState = CellState
   { _cellType :: CellType
@@ -28,7 +29,15 @@ data CellState = CellState
   , _tracesOut :: [Traces]
   }
 
-makeLenses '' CellState
+instance Show CellState where
+  show CellState {_cellType, _amount, _taken, _antID} =
+    "CellState { type: " ++
+    show _cellType ++
+    ", amount: " ++
+    show _amount ++
+    ", taken: " ++ show _taken ++ ", antID: " ++ show _antID ++ " }"
+
+makeLenses ''CellState
 
 defaultCellState =
   CellState

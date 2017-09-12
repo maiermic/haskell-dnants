@@ -33,7 +33,7 @@ import DNAnts.State.Population (Population)
 import DNAnts.Types as AS
 import DNAnts.Types
        (AppSettings(AppSettings, _framesPerSecond, gridExtents,
-                    gridSpacing, initTeamSize, numTeams),
+                    _gridSpacing, initTeamSize, numTeams),
         Color, Extents, Position, divA, rect, rgb, rgba, toColor3)
 import DNAnts.Types.Orientation
        (Orientation, directionOfOrientation, noOrientation, or2deg, dir2or)
@@ -85,7 +85,7 @@ createMapConfig AppSettings {numTeams, gridExtents, initTeamSize} =
   }
 
 createGameState :: AppSettings -> IO GameState
-createGameState appSettings@AppSettings {gridExtents, gridSpacing, numTeams} = do
+createGameState appSettings@AppSettings {gridExtents, numTeams} = do
   Map {grid, population} <- generateMap $ createMapConfig appSettings
   return
     GameState
@@ -101,7 +101,7 @@ createGameState appSettings@AppSettings {gridExtents, gridSpacing, numTeams} = d
     }
 
 defaultAppPlayState :: AppSettings -> Sprites -> IO AppPlayState
-defaultAppPlayState appSettings@AppSettings {gridExtents, gridSpacing, numTeams} sprites = do
+defaultAppPlayState appSettings@AppSettings {gridExtents, _gridSpacing, numTeams} sprites = do
   _gameState <- createGameState appSettings
   return
     AppPlayState
@@ -112,7 +112,7 @@ defaultAppPlayState appSettings@AppSettings {gridExtents, gridSpacing, numTeams}
     , _showInTraces = True
     , _showOutTraces = True
     , _lastRoundMs = 0
-    , gridSpacing
+    , gridSpacing = _gridSpacing
     , gridExtents
     , _markedCell = V2 (-1) (-1)
     , _gameState
@@ -172,9 +172,9 @@ renderFoodCell settings window sprites pos cellState =
   in when (amountLeft > 0 && amountQurt > 0) $ renderCell settings window sprite pos
 
 renderCell :: AppSettings -> Window -> Sprite -> Position -> IO ()
-renderCell AppSettings {gridSpacing} window texture cellPos =
-  let size = gridSpacing
-  in renderTexture window texture ((* gridSpacing) <$> cellPos) (V2 size size)
+renderCell AppSettings {_gridSpacing} window texture cellPos =
+  let size = _gridSpacing
+  in renderTexture window texture ((* _gridSpacing) <$> cellPos) (V2 size size)
 
 renderTexture :: Window -> Sprite -> Position -> Extents -> IO ()
 renderTexture Window {renderer} texture (V2 x y) (V2 w h) = do
@@ -184,9 +184,9 @@ renderTexture Window {renderer} texture (V2 x y) (V2 w h) = do
   SDL.copy renderer texture Nothing (Just dstRect)
 
 renderCellWithOrientation :: AppSettings -> Window -> Sprite -> Position -> Orientation -> IO ()
-renderCellWithOrientation AppSettings {gridSpacing} window texture cellPos orientation =
-  let size = gridSpacing
-  in renderTextureWithOrientation window texture ((* gridSpacing) <$> cellPos) (V2 size size) orientation
+renderCellWithOrientation AppSettings {_gridSpacing} window texture cellPos orientation =
+  let size = _gridSpacing
+  in renderTextureWithOrientation window texture ((* _gridSpacing) <$> cellPos) (V2 size size) orientation
 
 renderTextureWithOrientation :: Window -> Sprite -> Position -> Extents -> Orientation -> IO ()
 renderTextureWithOrientation Window {renderer} texture (V2 x y) (V2 w h) orientation = do
@@ -197,7 +197,7 @@ renderTextureWithOrientation Window {renderer} texture (V2 x y) (V2 w h) orienta
   SDL.copyEx renderer texture Nothing (Just dstRect) angle Nothing (V2 False False)
 
 renderObjects :: AppSettings -> Window -> AppPlayState -> IO ()
-renderObjects settings@AppSettings {gridSpacing} window AppPlayState { _gameState
+renderObjects settings@AppSettings {_gridSpacing} window AppPlayState { _gameState
                                                                      , sprites
                                                                      , teamColors
                                                                      } =
@@ -208,7 +208,7 @@ renderObjects settings@AppSettings {gridSpacing} window AppPlayState { _gameStat
          drawCellCircle
            window
            (fromIntegral <$> spawnPoint)
-           (fromIntegral gridSpacing)
+           (fromIntegral _gridSpacing)
            noOrientation
            teamColor
        forM_ _ants $ renderAnt settings window sprites teamColor
@@ -279,7 +279,7 @@ renderAnt settings window sprites color Ant {_state} =
       SDL.textureColorMod antSprite $= toColor3 color
       renderCellWithOrientation settings window antSprite p $ dir2or $ _dir _state
     when (_state ^. isCarrying) $
-      let gsp = AS.gridSpacing settings
+      let gsp = AS._gridSpacing settings
           size = gsp
           center = (* gsp) <$> p
           mouthOffset = (* (gsp `div` 4)) <$> _dir _state

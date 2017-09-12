@@ -7,6 +7,7 @@
 module DNAnts.State.Input where
 
 import qualified SDL
+import DNAnts.Types (Position)
 
 data Input
   = Reset
@@ -22,6 +23,7 @@ data Input
   | MaxSpeed
   | Pause
   | SingleStep
+  | ShowDebugInfoOfPosition Position
   deriving (Eq, Show)
 
 toInput :: SDL.Keycode -> Maybe Input
@@ -57,3 +59,25 @@ toReleasedKey :: SDL.EventPayload -> Maybe SDL.Keycode
 toReleasedKey (SDL.KeyboardEvent e)
   | isReleasedKey e = Just $ SDL.keysymKeycode $ SDL.keyboardEventKeysym e
 toReleasedKey _ = Nothing
+
+toMouseButtonEventData :: SDL.EventPayload -> Maybe SDL.MouseButtonEventData
+toMouseButtonEventData (SDL.MouseButtonEvent e) = Just e
+toMouseButtonEventData _ = Nothing
+
+isMouseButtonPressed :: SDL.MouseButtonEventData -> Bool
+isMouseButtonPressed eventData =
+  SDL.mouseButtonEventMotion eventData == SDL.Pressed
+
+isLeftMouseButton :: SDL.MouseButtonEventData -> Bool
+isLeftMouseButton eventData =
+  SDL.mouseButtonEventButton eventData == SDL.ButtonLeft
+
+isLeftMouseButtonPressed :: SDL.MouseButtonEventData -> Bool
+isLeftMouseButtonPressed e = isMouseButtonPressed e && isLeftMouseButton e
+
+inputFromMouseEvent :: SDL.MouseButtonEventData -> Maybe Input
+inputFromMouseEvent e | isLeftMouseButtonPressed e =
+  let (SDL.P pos) = SDL.mouseButtonEventPos e
+  in Just $ ShowDebugInfoOfPosition $ fromIntegral <$> pos
+inputFromMouseEvent _ = Nothing
+
