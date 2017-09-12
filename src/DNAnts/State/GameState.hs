@@ -393,7 +393,7 @@ greedyClient = do
            then view containsFood $ cellAt cellPos $ _cells grid
            else False
       foodDir =
-        fromMaybe _dir $
+        fromMaybe (V2 0 0) $
         find isFoodInDirection adjDir
   liftIO $ putStrLn $ "foodDir = " ++ show foodDir ++ ", " ++ show antState
   case _mode of
