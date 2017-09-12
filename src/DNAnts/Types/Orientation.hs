@@ -67,7 +67,7 @@ directionOfOrientation (Orientation lon lat) =
           Nothing -> 0
           Just West -> (-1)
           Just East -> 1
-  in V2 lonDir latDir
+  in V2 latDir lonDir
 
 orientationTable =
   [ (north, 0)
@@ -85,14 +85,14 @@ or2int o = fromMaybe (-1) $ lookup o orientationTable
 
 dir2or :: Direction -> Orientation
 dir2or (V2 x y) =
-  let lonDir =
+  let latDir =
         if | x == 0 -> Nothing
-           | x < 0 -> Just North
-           | x > 0 -> Just South
-      latDir =
+           | x < 0 -> Just West
+           | x > 0 -> Just East
+      lonDir =
         if | y == 0 -> Nothing
-           | y < 0 -> Just West
-           | y > 0 -> Just East
+           | y < 0 -> Just North
+           | y > 0 -> Just South
   in Orientation lonDir latDir
 
 or2dir :: Orientation -> Direction
