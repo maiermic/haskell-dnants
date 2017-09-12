@@ -121,10 +121,10 @@ takeFoodNL = do
   liftGameState $ gridCellStateL p . CS.numFood -= consumed
   return consumed
 
-dieNL :: Monad m => NestedAntState m
+dieNL :: MonadIO m => NestedAntState m
 dieNL = do
   mode .= Dead
-  -- TODO leave cell
+  leaveCurrentCell
 
 dropFoodNL :: Monad m => Int -> NestedAntState m
 dropFoodNL dropAmount = do
